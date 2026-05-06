@@ -1,0 +1,1 @@
+import"./chunk-TMC7WMLO.js";var n=[{path:"",loadComponent:()=>import("./chunk-VGE34O5X.js").then(o=>o.LoginComponent)},{path:"login",loadComponent:()=>import("./chunk-VGE34O5X.js").then(o=>o.LoginComponent)}];export{n as authRoutes};
