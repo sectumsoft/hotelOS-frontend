@@ -87,6 +87,9 @@ declare const ApexCharts: any;
         </div>
       }
 
+      <!-- ROOM AVAILABILITY CALENDAR — front and centre for the hotel -->
+      <app-availability-calendar />
+
       <!-- Charts -->
       <div class="charts-grid">
         <div class="chart-card chart-full">
@@ -111,8 +114,6 @@ declare const ApexCharts: any;
           <div id="sourcesChart"></div>
         </div>
       </div>
-<!-- ROOM AVAILABILITY CALENDAR -->
-<app-availability-calendar />
 
     </div>
   `,

@@ -114,35 +114,36 @@ function ymd(d: Date): string {
     </div>
   `,
   styles: [`
-    .cal-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin-top: 1.5rem; }
-    .cal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
-    .cal-title h4 { margin: 0; font-size: 1rem; }
-    .cal-title span { font-size: 0.78rem; color: var(--color-text-muted); }
-    .cal-nav { display: flex; align-items: center; gap: 0.4rem; }
-    .cal-month { font-size: 0.85rem; font-weight: 600; min-width: 130px; text-align: center; }
-    .cal-btn { width: 30px; height: 30px; border-radius: var(--radius-sm); border: 1px solid var(--color-border); background: var(--color-surface-2); color: var(--color-text-muted); cursor: pointer; transition: var(--transition); }
+    .cal-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1rem 1.1rem; margin-top: 1.5rem; }
+    .cal-head { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+    .cal-title h4 { margin: 0; font-size: 0.9rem; }
+    .cal-title span { font-size: 0.72rem; color: var(--color-text-muted); }
+    .cal-nav { display: flex; align-items: center; gap: 0.3rem; }
+    .cal-month { font-size: 0.8rem; font-weight: 600; min-width: 118px; text-align: center; }
+    .cal-btn { width: 26px; height: 26px; border-radius: var(--radius-sm); border: 1px solid var(--color-border); background: var(--color-surface-2); color: var(--color-text-muted); cursor: pointer; transition: var(--transition); font-size: 0.75rem; }
     .cal-btn:hover { color: var(--color-text); }
-    .cal-today { padding: 0.35rem 0.7rem; border-radius: var(--radius-sm); border: 1px solid var(--color-border); background: var(--color-surface-2); color: var(--color-text-muted); font-size: 0.75rem; cursor: pointer; }
+    .cal-today { padding: 0.3rem 0.6rem; border-radius: var(--radius-sm); border: 1px solid var(--color-border); background: var(--color-surface-2); color: var(--color-text-muted); font-size: 0.7rem; cursor: pointer; }
     .cal-today:hover { color: var(--color-text); }
 
-    .cal-loading { padding: 2rem; text-align: center; color: var(--color-text-muted); font-size: 0.85rem; }
+    .cal-loading { padding: 1.5rem; text-align: center; color: var(--color-text-muted); font-size: 0.82rem; }
 
-    .cal-legend { display: flex; gap: 1rem; flex-wrap: wrap; margin: 1rem 0 0.5rem; font-size: 0.72rem; color: var(--color-text-muted); }
-    .cal-legend .dot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 0.35rem; vertical-align: middle; }
+    .cal-legend { display: flex; gap: 0.85rem; flex-wrap: wrap; margin: 0.6rem 0 0.4rem; font-size: 0.66rem; color: var(--color-text-muted); }
+    .cal-legend .dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 0.3rem; vertical-align: middle; }
     .dot.low { background: var(--color-green); }
     .dot.mid { background: #f59e0b; }
     .dot.high { background: #f97316; }
     .dot.full { background: var(--color-red); }
 
-    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-    .cal-weekdays { margin-bottom: 6px; }
-    .cal-wd { text-align: center; font-size: 0.68rem; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.04em; padding: 0.25rem 0; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+    .cal-weekdays { margin-bottom: 3px; }
+    .cal-wd { text-align: center; font-size: 0.62rem; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.03em; padding: 0.1rem 0; }
 
     .cal-cell {
-      min-height: 74px; border: 1px solid var(--color-border); border-radius: var(--radius-md);
-      background: var(--color-surface-2); padding: 0.4rem; cursor: pointer;
-      display: flex; flex-direction: column; align-items: flex-start; gap: 0.2rem;
+      min-height: 46px; border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+      background: var(--color-surface-2); padding: 0.25rem 0.3rem 0.3rem 0.4rem; cursor: pointer;
+      display: flex; flex-direction: column; align-items: flex-start; gap: 0.1rem;
       transition: var(--transition); font-family: var(--font-sans); position: relative; overflow: hidden;
+      line-height: 1.1;
     }
     .cal-cell::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
     .cal-cell.lvl-low::before  { background: var(--color-green); }
@@ -150,42 +151,43 @@ function ymd(d: Date): string {
     .cal-cell.lvl-high::before { background: #f97316; }
     .cal-cell.lvl-full::before { background: var(--color-red); }
     .cal-cell:hover { border-color: var(--color-accent); }
-    .cal-cell.out { opacity: 0.4; }
+    .cal-cell.out { opacity: 0.35; }
     .cal-cell.today { box-shadow: inset 0 0 0 1px var(--color-accent); }
     .cal-cell.selected { border-color: var(--color-accent); background: var(--color-accent-soft); }
-    .cal-date { font-size: 0.82rem; font-weight: 700; }
-    .cal-free { font-size: 0.68rem; color: var(--color-text-muted); }
-    .cal-bar { width: 100%; height: 4px; border-radius: 2px; background: var(--color-border); margin-top: auto; overflow: hidden; }
+    .cal-date { font-size: 0.7rem; font-weight: 700; }
+    .cal-free { font-size: 0.6rem; color: var(--color-text-muted); }
+    .cal-bar { width: 100%; height: 3px; border-radius: 2px; background: var(--color-border); margin-top: auto; overflow: hidden; }
     .cal-bar > span { display: block; height: 100%; background: var(--color-accent); }
     .cal-cell.lvl-full .cal-bar > span { background: var(--color-red); }
     .cal-cell.lvl-high .cal-bar > span { background: #f97316; }
     .cal-cell.lvl-mid .cal-bar > span { background: #f59e0b; }
     .cal-cell.lvl-low .cal-bar > span { background: var(--color-green); }
 
-    .cal-detail { margin-top: 1rem; border-top: 1px solid var(--color-border); padding-top: 1rem; }
-    .cal-detail-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem; }
-    .cal-detail-head span { font-size: 0.8rem; color: var(--color-text-muted); }
-    .cal-detail-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
-    .cal-col-h { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.5rem; }
+    .cal-detail { margin-top: 0.85rem; border-top: 1px solid var(--color-border); padding-top: 0.85rem; }
+    .cal-detail-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.6rem; flex-wrap: wrap; gap: 0.4rem; }
+    .cal-detail-head strong { font-size: 0.85rem; }
+    .cal-detail-head span { font-size: 0.76rem; color: var(--color-text-muted); }
+    .cal-detail-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .cal-col-h { font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.4rem; }
     .cal-col-h.booked { color: var(--color-red); }
     .cal-col-h.free { color: var(--color-green); }
     .cal-col-h.maint { color: var(--color-text-muted); }
-    .cal-none { font-size: 0.8rem; color: var(--color-text-muted); }
-    .cal-room { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0; border-bottom: 1px solid var(--color-border); font-size: 0.8rem; }
-    .cal-room .rn { font-weight: 700; font-family: var(--font-mono); min-width: 42px; }
-    .cal-room .rt { color: var(--color-text-muted); font-size: 0.75rem; }
+    .cal-none { font-size: 0.76rem; color: var(--color-text-muted); }
+    .cal-room { display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0; border-bottom: 1px solid var(--color-border); font-size: 0.76rem; }
+    .cal-room .rn { font-weight: 700; font-family: var(--font-mono); min-width: 40px; }
+    .cal-room .rt { color: var(--color-text-muted); font-size: 0.72rem; }
     .cal-room .gn { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .cal-room .st { font-size: 0.68rem; font-weight: 700; padding: 0.1rem 0.4rem; border-radius: 100px; }
+    .cal-room .st { font-size: 0.64rem; font-weight: 700; padding: 0.08rem 0.38rem; border-radius: 100px; }
     .st-confirmed { background: var(--color-blue-soft); color: var(--color-blue); }
     .st-checkedin { background: var(--color-green-soft); color: var(--color-green); }
     .st-checkedout { background: var(--color-surface-2); color: var(--color-text-muted); }
-    .cal-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-    .chip { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.25rem 0.55rem; border-radius: var(--radius-sm); background: var(--color-green-soft); color: var(--color-green); font-size: 0.78rem; font-weight: 600; font-family: var(--font-mono); }
+    .cal-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+    .chip { display: inline-flex; align-items: center; gap: 0.28rem; padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); background: var(--color-green-soft); color: var(--color-green); font-size: 0.72rem; font-weight: 600; font-family: var(--font-mono); }
     .chip small { font-family: var(--font-sans); font-weight: 500; opacity: 0.7; }
     .chip.muted { background: var(--color-surface-2); color: var(--color-text-muted); }
 
     @media (max-width: 640px) {
-      .cal-cell { min-height: 60px; }
+      .cal-cell { min-height: 40px; }
       .cal-free { display: none; }
       .cal-detail-cols { grid-template-columns: 1fr; }
     }
@@ -222,7 +224,11 @@ export class AvailabilityCalendarComponent implements OnInit {
     const cap = this.capacity();
     const out: DayCell[] = [];
 
-    for (let i = 0; i < 42; i++) {
+    // Only render as many weeks as the month actually spans (4, 5 or 6).
+    const daysInMonth = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+    const total = Math.ceil((first.getDay() + daysInMonth) / 7) * 7;
+
+    for (let i = 0; i < total; i++) {
       const date = new Date(start);
       date.setDate(start.getDate() + i);
       const key = ymd(date);
