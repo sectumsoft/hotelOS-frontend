@@ -155,12 +155,13 @@ export interface Booking {
 export interface CreateBookingRequest {
   guestName: string;
   guestPhone: string;
-  guestAddress?: string;
+  guestAddress?: string | null;
   roomId: string;
   checkInDate: string;
   checkOutDate: string;
+  numberOfGuests: number;
   advancePaid: boolean;
-  advanceAmount?: number;
+  advanceAmount: number;
 }
 
 export interface CheckInRequest {

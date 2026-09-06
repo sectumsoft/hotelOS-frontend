@@ -53,7 +53,7 @@ import { Room } from '../../../shared/models';
               <select class="form-input" formControlName="roomId" (change)="onRoomChange()">
                 <option value="">Choose a room</option>
                 @for (room of availableRooms; track room.id) {
-                  <option [value]="room.id">{{ room.roomNumber }} - {{ room.roomType }} - $ {{ room.pricePerNight }}/night</option>
+                  <option [value]="room.id">{{ room.roomNumber }} - {{ room.roomType }} - ₹ {{ room.pricePerNight }}/night</option>
                 }
               </select>
             </div>
@@ -88,8 +88,11 @@ import { Room } from '../../../shared/models';
             </div>
             @if (form.get('advancePaid')?.value) {
               <div class="form-group" style="margin-bottom:1.25rem">
-                <label>Advance Amount (INR)</label>
-                <input type="number" class="form-input" formControlName="advanceAmount" placeholder="0.00" min="0" />
+                <label>Advance Amount (₹)</label>
+                <input type="number" class="form-input" formControlName="advanceAmount" placeholder="0.00" min="0" [max]="totalAmount || null" />
+                @if (advance > totalAmount && totalAmount > 0) {
+                  <span style="font-size:.75rem;color:var(--color-red)">Advance can't be more than the total (₹ {{ totalAmount }})</span>
+                }
               </div>
             }
 
@@ -124,16 +127,20 @@ import { Room } from '../../../shared/models';
               <span class="info-label">Nights</span>
               <span class="info-value">{{ totalNights }}</span>
             </div>
-          }
-          @if (form.get('advancePaid')?.value && form.get('advanceAmount')?.value) {
             <div class="info-row">
-              <span class="info-label">Advance</span>
-              <span class="info-value" style="color:var(--color-green)">-$ {{ form.get('advanceAmount')?.value }}</span>
+              <span class="info-label">Room total</span>
+              <span class="info-value">₹ {{ totalAmount }}</span>
+            </div>
+          }
+          @if (advance > 0) {
+            <div class="info-row">
+              <span class="info-label">Advance paid</span>
+              <span class="info-value" style="color:var(--color-green)">− ₹ {{ advance }}</span>
             </div>
           }
           <div class="info-row" style="border-top:1px solid var(--color-border);margin-top:.5rem;padding-top:.75rem">
-            <span class="info-label" style="font-weight:600;color:var(--color-text)">Total</span>
-            <span class="info-value" style="font-size:1.2rem;color:var(--color-accent)">₹ {{ totalAmount }}</span>
+            <span class="info-label" style="font-weight:600;color:var(--color-text)">Balance due</span>
+            <span class="info-value" style="font-size:1.2rem;color:var(--color-accent)">₹ {{ balanceDue }}</span>
           </div>
         </div>
       </div>
@@ -157,7 +164,7 @@ export class BookingFormComponent implements OnInit {
     checkOutDate: ['', Validators.required],
     numberOfGuests: [1, [Validators.required, Validators.min(1)]],
     advancePaid: [false],
-    advanceAmount: [null as number | null]
+    advanceAmount: [null as number | null, [Validators.min(0)]]
   });
 
   availableRooms: Room[] = [];
@@ -169,6 +176,15 @@ export class BookingFormComponent implements OnInit {
   bookingId = '';
 
   get f() { return this.form.controls; }
+
+  get advance(): number {
+    if (!this.form.get('advancePaid')?.value) return 0;
+    return Math.max(0, Number(this.form.get('advanceAmount')?.value) || 0);
+  }
+
+  get balanceDue(): number {
+    return Math.max(0, this.totalAmount - this.advance);
+  }
 
   ngOnInit() {
     this.bookingId = this.route.snapshot.params['id'];
@@ -206,23 +222,54 @@ export class BookingFormComponent implements OnInit {
   }
 
   onAdvanceToggle() {
-    if (!this.form.get('advancePaid')?.value) this.form.patchValue({ advanceAmount: null });
+    this.form.patchValue({
+      advanceAmount: this.form.get('advancePaid')?.value ? 0 : null
+    });
   }
 
   onSubmit() {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+
+    if (this.totalNights <= 0) {
+      this.toast.error('Check-out date must be after check-in date');
+      return;
+    }
+    if (this.advance > this.totalAmount) {
+      this.toast.error(`Advance can't exceed the total (₹ ${this.totalAmount})`);
+      return;
+    }
+
+    const v = this.form.value as any;
+    const payload = {
+      guestName: v.guestName,
+      guestPhone: v.guestPhone,
+      guestAddress: v.guestAddress || null,
+      roomId: v.roomId,
+      checkInDate: v.checkInDate,
+      checkOutDate: v.checkOutDate,
+      numberOfGuests: Number(v.numberOfGuests) || 1,
+      advancePaid: this.advance > 0,
+      advanceAmount: this.advance,
+    };
+
     this.loading = true;
-    const data = this.form.value as any;
-    const req = this.isEdit ? this.bookingSvc.update(this.bookingId, data) : this.bookingSvc.create(data);
+    const req = this.isEdit
+      ? this.bookingSvc.update(this.bookingId, payload)
+      : this.bookingSvc.create(payload);
     req.subscribe({
       next: res => {
         if (res.success) {
           this.toast.success(this.isEdit ? 'Booking updated!' : 'Booking created!');
           this.router.navigate(['/bookings']);
+        } else {
+          this.toast.error(res.message || 'Failed to save booking');
         }
         this.loading = false;
       },
-      error: () => { this.toast.error('Failed to save booking'); this.loading = false; }
+      error: err => {
+        this.toast.error(err.error?.message || 'Failed to save booking');
+        this.loading = false;
+      }
     });
   }
 }
