@@ -209,7 +209,7 @@ export class DashboardComponent implements OnInit {
   });
 
   get occupancyRate(): number {
-    if (!this.stats) return 0;
+    if (!this.stats || !this.stats.totalRooms) return 0;
     return Math.round((this.stats.occupiedRooms / this.stats.totalRooms) * 100);
   }
 

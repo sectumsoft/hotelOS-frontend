@@ -194,13 +194,56 @@ export class BookingFormComponent implements OnInit {
 
   loadRooms() {
     this.roomSvc.getAll({ pageNumber: 1, pageSize: 100, status: 'Available' }).subscribe({
-      next: res => { if (res.success) this.availableRooms = res.data.items; },
+      next: res => {
+        if (res.success) this.availableRooms = res.data.items;
+        if (this.isEdit) this.loadBooking();
+      },
       error: () => {
-        this.availableRooms = [
-          { id: 'r1', tenantId: 't1', roomNumber: '101', roomType: 'Standard', pricePerNight: 89, status: 'Available', amenities: [], images: [], description: '', createdAt: '', updatedAt: '' },
-          { id: 'r2', tenantId: 't1', roomNumber: '202', roomType: 'Deluxe', pricePerNight: 149, status: 'Available', amenities: [], images: [], description: '', createdAt: '', updatedAt: '' },
-          { id: 'r3', tenantId: 't1', roomNumber: '301', roomType: 'Suite', pricePerNight: 299, status: 'Available', amenities: [], images: [], description: '', createdAt: '', updatedAt: '' },
-        ];
+        this.availableRooms = [];
+        if (this.isEdit) this.loadBooking();
+      }
+    });
+  }
+
+  loadBooking() {
+    this.bookingSvc.getById(this.bookingId).subscribe({
+      next: res => {
+        if (!res.success || !res.data) {
+          this.toast.error('Booking not found');
+          this.router.navigate(['/bookings']);
+          return;
+        }
+        const b = res.data;
+        if (b.status !== 'Confirmed') {
+          this.toast.info('Only upcoming (Confirmed) bookings can be edited');
+          this.router.navigate(['/bookings']);
+          return;
+        }
+        // make sure the booked room is selectable even if filtered out of the list
+        if (!this.availableRooms.some(r => r.id === b.roomId)) {
+          this.availableRooms = [
+            { id: b.roomId, tenantId: b.tenantId, roomNumber: b.roomNumber, roomType: b.roomType,
+              pricePerNight: b.totalNights ? b.totalAmount / b.totalNights : 0,
+              status: 'Available', amenities: [], images: [], description: '', createdAt: '', updatedAt: '' },
+            ...this.availableRooms
+          ];
+        }
+        this.form.patchValue({
+          guestName: b.guestName,
+          guestPhone: b.guestPhone,
+          guestAddress: b.guestAddress || '',
+          roomId: b.roomId,
+          checkInDate: (b.checkInDate || '').slice(0, 10),
+          checkOutDate: (b.checkOutDate || '').slice(0, 10),
+          numberOfGuests: b.numberOfGuests || 1,
+          advancePaid: b.advancePaid,
+          advanceAmount: b.advancePaid ? b.advanceAmount : null,
+        });
+        this.onRoomChange();
+      },
+      error: () => {
+        this.toast.error('Could not load booking');
+        this.router.navigate(['/bookings']);
       }
     });
   }

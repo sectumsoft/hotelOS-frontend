@@ -104,10 +104,10 @@ import { Booking, BookingFilter, CheckInRequest, Bill } from '../../../shared/mo
                       <i class="bi bi-box-arrow-right"></i> Check-Out
                     </button>
                   }
-                  <a [routerLink]="['/bookings/edit', b.id]" class="btn-ghost" style="padding:0.35rem 0.75rem;font-size:0.8rem">
-                    <i class="bi bi-pencil"></i>
-                  </a>
                   @if (b.status === 'Confirmed') {
+                    <a [routerLink]="['/bookings/edit', b.id]" class="btn-ghost" style="padding:0.35rem 0.75rem;font-size:0.8rem">
+                      <i class="bi bi-pencil"></i>
+                    </a>
                     <button class="btn-danger-ghost" style="padding:0.35rem 0.75rem;font-size:0.8rem" (click)="cancelBooking(b)">
                       <i class="bi bi-x-lg"></i>
                     </button>
