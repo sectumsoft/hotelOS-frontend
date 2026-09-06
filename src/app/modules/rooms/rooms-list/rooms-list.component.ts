@@ -6,11 +6,12 @@ import { RoomService } from '../../../core/services/room.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { Room, RoomFilter, RoomStatus, RoomType } from '../../../shared/models';
 import { environment } from '../../../../environments/environment';
+import { RoomImportComponent } from './room-import.component';
 
 @Component({
   selector: 'app-rooms-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, RoomImportComponent],
   template: `
     <div class="rooms-page">
       <div class="page-header">
@@ -23,11 +24,18 @@ import { environment } from '../../../../environments/environment';
             <button [class.active]="viewMode==='grid'" (click)="viewMode='grid'"><i class="bi bi-grid-3x3-gap"></i></button>
             <button [class.active]="viewMode==='list'" (click)="viewMode='list'"><i class="bi bi-list-ul"></i></button>
           </div>
+          <button class="btn-ghost" (click)="showImport = true">
+            <i class="bi bi-file-earmark-spreadsheet"></i> Import Excel
+          </button>
           <a routerLink="/rooms/add" class="btn-primary-custom">
             <i class="bi bi-plus-lg"></i> Add Room
           </a>
         </div>
       </div>
+
+      @if (showImport) {
+        <app-room-import (close)="showImport = false" (imported)="onImported()" />
+      }
 
       <div class="filters-bar">
         <div class="search-bar" style="flex:1;max-width:320px">
@@ -196,6 +204,7 @@ export class RoomsListComponent implements OnInit {
   loading = true;
   viewMode: 'grid' | 'list' = 'grid';
   deleteTarget: Room | null = null;
+  showImport = false;
   totalCount = 0;
   totalPages = 1;
 
@@ -229,6 +238,11 @@ export class RoomsListComponent implements OnInit {
   goPage(p: number) { this.filter.pageNumber = p; this.loadRooms(); }
 
   confirmDelete(room: Room) { this.deleteTarget = room; }
+
+  onImported() {
+    this.filter.pageNumber = 1;
+    this.loadRooms();
+  }
 
   deleteRoom() {
     if (!this.deleteTarget) return;

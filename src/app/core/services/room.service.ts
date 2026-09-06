@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ApiResponse, PagedResult, Room, RoomFilter } from '../../shared/models';
+import { ApiResponse, PagedResult, Room, RoomFilter, BulkRoomRow, BulkImportResult } from '../../shared/models';
 
 @Injectable({ providedIn: 'root' })
 export class RoomService {
@@ -34,5 +34,9 @@ export class RoomService {
 
   delete(id: string): Observable<ApiResponse<boolean>> {
     return this.http.delete<ApiResponse<boolean>>(`${this.base}/${id}`);
+  }
+
+  bulkCreate(rooms: BulkRoomRow[]): Observable<ApiResponse<BulkImportResult>> {
+    return this.http.post<ApiResponse<BulkImportResult>>(`${this.base}/bulk`, { rooms });
   }
 }

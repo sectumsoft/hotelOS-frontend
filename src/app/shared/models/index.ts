@@ -93,6 +93,27 @@ export interface RoomFilter {
   pageSize: number;
 }
 
+export interface BulkRoomRow {
+  row: number;
+  roomNumber: string;
+  roomType: string;
+  pricePerNight: number | null;
+  description?: string;
+  status?: string;
+  amenities?: string[];
+}
+
+export interface BulkImportError {
+  row: number;
+  roomNumber: string;
+  reason: string;
+}
+
+export interface BulkImportResult {
+  added: number;
+  skipped: BulkImportError[];
+}
+
 export interface Guest {
   id: string;
   tenantId: string;
