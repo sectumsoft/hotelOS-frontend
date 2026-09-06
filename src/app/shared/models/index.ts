@@ -121,6 +121,7 @@ export interface Booking {
   checkInDate: string;
   checkOutDate: string;
   totalNights: number;
+  numberOfGuests: number;
   totalAmount: number;
   advancePaid: boolean;
   advanceAmount?: number;

@@ -1,1 +1,0 @@
-import"./chunk-TMC7WMLO.js";var t=[{path:"",loadComponent:()=>import("./chunk-ABVTNSWG.js").then(o=>o.RoomsListComponent)},{path:"add",loadComponent:()=>import("./chunk-TSZLROJL.js").then(o=>o.RoomFormComponent)},{path:"edit/:id",loadComponent:()=>import("./chunk-TSZLROJL.js").then(o=>o.RoomFormComponent)}];export{t as roomsRoutes};

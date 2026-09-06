@@ -242,7 +242,7 @@ export class LoginComponent implements OnInit {
   errorMsg = '';
 
   ngOnInit() {
-    if (this.auth.isLoggedIn) this.router.navigate(['/dashboard']);
+    if (this.auth.isLoggedIn) this.router.navigate([this.auth.homeRoute]);
     // Load rememberMe preference
     const savedEmail = localStorage.getItem('rememberMe_email');
     if (savedEmail) {
@@ -267,7 +267,7 @@ export class LoginComponent implements OnInit {
       next: (res) => {
         if (res.success) {
           this.toast.success('Welcome back!', 'Signed in');
-          this.router.navigate(['/dashboard']);
+          this.router.navigate([this.auth.homeRoute]);
         } else {
           this.errorMsg = res.message || 'Login failed';
         }

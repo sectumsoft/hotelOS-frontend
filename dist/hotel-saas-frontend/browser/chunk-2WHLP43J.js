@@ -1,1 +1,0 @@
-import"./chunk-TMC7WMLO.js";var n=[{path:"",loadComponent:()=>import("./chunk-IOVLLDYJ.js").then(o=>o.BookingsListComponent)},{path:"add",loadComponent:()=>import("./chunk-35VGHQWD.js").then(o=>o.BookingFormComponent)},{path:"edit/:id",loadComponent:()=>import("./chunk-35VGHQWD.js").then(o=>o.BookingFormComponent)}];export{n as bookingsRoutes};

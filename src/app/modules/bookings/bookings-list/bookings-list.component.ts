@@ -69,6 +69,12 @@ import { Booking, BookingFilter, CheckInRequest, Bill } from '../../../shared/mo
                   <div class="detail-label">Room</div>
                   <div class="detail-value">{{ b.roomNumber }} · {{ b.roomType }}</div>
                 </div>
+                  <div class="detail-item">
+    <div class="detail-label">Guests</div>
+    <div class="detail-value">
+      <i class="bi bi-people"></i> {{ b.numberOfGuests }}
+    </div>
+  </div>
                 <div class="detail-item">
                   <div class="detail-label">Nights</div>
                   <div class="detail-value">{{ b.totalNights }}</div>
@@ -804,10 +810,10 @@ export class BookingsListComponent implements OnInit {
 
   getMockBookings(): Booking[] {
     return [
-      { id: '1', bookingNumber: 'BK-0001', tenantId: 't1', guestId: 'g1', guestName: 'James Wilson', guestPhone: '+1 555 0101', roomId: 'r1', roomNumber: '201', roomType: 'Deluxe', checkInDate: '2024-03-15', checkOutDate: '2024-03-18', totalNights: 3, totalAmount: 447, advancePaid: true, advanceAmount: 150, balanceAmount: 297, status: 'Confirmed', createdAt: '', updatedAt: '' },
-      { id: '2', bookingNumber: 'BK-0002', tenantId: 't1', guestId: 'g2', guestName: 'Sarah Chen', guestPhone: '+1 555 0102', roomId: 'r2', roomNumber: '301', roomType: 'Suite', checkInDate: '2024-03-14', checkOutDate: '2024-03-17', totalNights: 3, totalAmount: 897, advancePaid: true, advanceAmount: 300, balanceAmount: 597, status: 'CheckedIn', createdAt: '', updatedAt: '' },
-      { id: '3', bookingNumber: 'BK-0003', tenantId: 't1', guestId: 'g3', guestName: 'Robert Martinez', guestPhone: '+1 555 0103', roomId: 'r3', roomNumber: '102', roomType: 'Standard', checkInDate: '2024-03-10', checkOutDate: '2024-03-12', totalNights: 2, totalAmount: 178, advancePaid: false, balanceAmount: 178, status: 'CheckedOut', createdAt: '', updatedAt: '' },
-      { id: '4', bookingNumber: 'BK-0004', tenantId: 't1', guestId: 'g4', guestName: 'Emily Johnson', guestPhone: '+1 555 0104', roomId: 'r4', roomNumber: '202', roomType: 'Deluxe', checkInDate: '2024-03-20', checkOutDate: '2024-03-22', totalNights: 2, totalAmount: 298, advancePaid: false, balanceAmount: 298, status: 'Confirmed', createdAt: '', updatedAt: '' },
+      { id: '1', bookingNumber: 'BK-0001', tenantId: 't1', guestId: 'g1', guestName: 'James Wilson', guestPhone: '+1 555 0101', roomId: 'r1', roomNumber: '201', roomType: 'Deluxe', checkInDate: '2024-03-15', checkOutDate: '2024-03-18', totalNights: 3, numberOfGuests: 2, totalAmount: 447, advancePaid: true, advanceAmount: 150, balanceAmount: 297, status: 'Confirmed', createdAt: '', updatedAt: '' },
+      { id: '2', bookingNumber: 'BK-0002', tenantId: 't1', guestId: 'g2', guestName: 'Sarah Chen', guestPhone: '+1 555 0102', roomId: 'r2', roomNumber: '301', roomType: 'Suite', checkInDate: '2024-03-14', checkOutDate: '2024-03-17', totalNights: 3, numberOfGuests: 3, totalAmount: 897, advancePaid: true, advanceAmount: 300, balanceAmount: 597, status: 'CheckedIn', createdAt: '', updatedAt: '' },
+      { id: '3', bookingNumber: 'BK-0003', tenantId: 't1', guestId: 'g3', guestName: 'Robert Martinez', guestPhone: '+1 555 0103', roomId: 'r3', roomNumber: '102', roomType: 'Standard', checkInDate: '2024-03-10', checkOutDate: '2024-03-12', totalNights: 2, numberOfGuests: 1, totalAmount: 178, advancePaid: false, balanceAmount: 178, status: 'CheckedOut', createdAt: '', updatedAt: '' },
+      { id: '4', bookingNumber: 'BK-0004', tenantId: 't1', guestId: 'g4', guestName: 'Emily Johnson', guestPhone: '+1 555 0104', roomId: 'r4', roomNumber: '202', roomType: 'Deluxe', checkInDate: '2024-03-20', checkOutDate: '2024-03-22', totalNights: 2, numberOfGuests: 2, totalAmount: 298, advancePaid: false, balanceAmount: 298, status: 'Confirmed', createdAt: '', updatedAt: '' },
     ];
   }
 }

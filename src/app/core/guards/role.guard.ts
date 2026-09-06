@@ -10,6 +10,22 @@ export const roleGuard = (allowedRoles: string[]): CanActivateFn => () => {
 
   if (role && allowedRoles.includes(role)) return true;
 
-  router.navigate(['/dashboard']);
+  router.navigate([auth.homeRoute]);
   return false;
+};
+
+/**
+ * Blocks SuperAdmin from tenant-scoped pages (dashboard, rooms, bookings, …)
+ * and sends them to their own area instead. The backend rejects those calls
+ * for a SuperAdmin anyway, so this keeps the UI consistent with the API.
+ */
+export const notSuperAdminGuard: CanActivateFn = () => {
+  const auth   = inject(AuthService);
+  const router = inject(Router);
+
+  if (auth.currentUser?.role === 'SuperAdmin') {
+    router.navigate(['/superadmin']);
+    return false;
+  }
+  return true;
 };

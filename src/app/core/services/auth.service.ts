@@ -21,6 +21,11 @@ export class AuthService {
   get token(): string | null { return localStorage.getItem('token'); }
   get isLoggedIn(): boolean { return !!this.token && !!this.currentUser; }
 
+  /** Where a user should land after login, based on their role. */
+  get homeRoute(): string {
+    return this.currentUser?.role === 'SuperAdmin' ? '/superadmin' : '/dashboard';
+  }
+
   login(req: LoginRequest): Observable<ApiResponse<LoginResponse>> {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json; charset=utf-8'
