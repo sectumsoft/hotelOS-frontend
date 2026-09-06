@@ -14,6 +14,7 @@
 # IDEs / editors
 /.idea
 /.vscode
+/.claude
 .project
 .classpath
 .c9/

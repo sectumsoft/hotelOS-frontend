@@ -3,13 +3,14 @@ import { CommonModule } from '@angular/common';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { DashboardStats } from '../../shared/models';
+import { AvailabilityCalendarComponent } from './availability-calendar.component';
 
 declare const ApexCharts: any;
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, AvailabilityCalendarComponent],
   template: `
     <div class="dashboard-page">
 
@@ -42,7 +43,7 @@ declare const ApexCharts: any;
             <div class="metric-value">{{ stats?.totalRooms || 0 }}</div>
             <div class="metric-label">Total Rooms</div>
             <div class="metric-trend up">
-              <i class="bi bi-arrow-up-short"></i> All managed
+              <i class="bi bi-door-open"></i> {{ stats?.availableRooms || 0 }} available now
             </div>
           </div>
 
@@ -110,62 +111,9 @@ declare const ApexCharts: any;
           <div id="sourcesChart"></div>
         </div>
       </div>
-<!-- ROOM AVAILABILITY -->
-<div class="chart-card chart-full" style="margin-top:1.5rem">
+<!-- ROOM AVAILABILITY CALENDAR -->
+<app-availability-calendar />
 
-  <div class="chart-header" style="display:flex;justify-content:space-between;align-items:center">
-    <div>
-      <h4>Room Availability</h4>
-      <span>Check rooms for selected date</span>
-    </div>
-
-    <input type="date"
-           [value]="selectedDate"
-           (change)="onDateChange($event)"
-           style="padding:0.4rem 0.6rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text)" />
-  </div>
-
-  @if (loadingRooms) {
-    <div style="padding:1rem;color:var(--color-text-muted)">Loading availability...</div>
-  }
-
-  @if (!loadingRooms) {
-    <div style="overflow:auto;margin-top:0.75rem">
-      <table style="width:100%;border-collapse:collapse">
-
-        <tr style="border-bottom:1px solid var(--color-border);text-align:left">
-          <th style="padding:0.75rem">Room</th>
-          <th style="padding:0.75rem">Status</th>
-          <th style="padding:0.75rem">Guest</th>
-        </tr>
-
-        @for (room of rooms; track room.roomId) {
-          <tr style="border-bottom:1px solid var(--color-border)">
-
-            <td style="padding:0.75rem;font-weight:500">
-              {{ room.roomNumber }}
-            </td>
-
-            <td style="padding:0.75rem">
-              <span
-                [style.color]="room.isAvailable ? 'var(--color-green)' : 'var(--color-red)'"
-                style="font-weight:600">
-                {{ room.isAvailable ? 'Available' : 'Booked' }}
-              </span>
-            </td>
-
-            <td style="padding:0.75rem;color:var(--color-text-muted)">
-              {{ room.guestName || '-' }}
-            </td>
-
-          </tr>
-        }
-
-      </table>
-    </div>
-  }
-
-</div>
     </div>
   `,
   styles: [`
@@ -252,9 +200,6 @@ declare const ApexCharts: any;
 export class DashboardComponent implements OnInit {
   private dashboardSvc = inject(DashboardService);
   private themeSvc = inject(ThemeService);
-selectedDate: string = new Date().toISOString().split('T')[0];
-rooms: any[] = [];
-loadingRooms = false;
 
   stats: DashboardStats | null = null;
   loading = true;
@@ -288,8 +233,6 @@ loadingRooms = false;
   ngOnInit() {
     this.loadStats();
     this.loadCharts();
-      this.loadAvailability(); 
-
   }
 
   loadStats() {
@@ -315,115 +258,148 @@ loadingRooms = false;
     };
   }
 
+  private fmtDay(d: Date) {
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
   renderRevenueChart() {
     const el = document.getElementById('revenueChart');
     if (!el || typeof (window as any).ApexCharts === 'undefined') return;
     const colors = this.getChartColors();
     const isMobile = window.innerWidth <= 768;
-    const dates = Array.from({ length: 30 }, (_, i) => {
-      const d = new Date(); d.setDate(d.getDate() - 29 + i);
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    });
-    const data = Array.from({ length: 30 }, () => Math.floor(Math.random() * 5000) + 2000);
-    new (window as any).ApexCharts(el, {
-      chart: {
-        type: 'area', height: this.getChartHeight(),
-        toolbar: { show: false }, background: 'transparent',
-        animations: { enabled: true, speed: 600 }
-      },
-      series: [{ name: 'Revenue', data }],
-      xaxis: {
-        categories: dates,
-        labels: { style: { colors: colors.textColor, fontSize: '11px' }, rotate: 0 },
-        tickAmount: isMobile ? 4 : 6
-      },
-      yaxis: {
-        labels: {
-          style: { colors: colors.textColor, fontSize: '11px' },
-          formatter: (v: number) => '$' + v.toLocaleString()
+
+    const draw = (categories: string[], data: number[]) => {
+      new (window as any).ApexCharts(el, {
+        chart: {
+          type: 'area', height: this.getChartHeight(),
+          toolbar: { show: false }, background: 'transparent',
+          animations: { enabled: true, speed: 600 }
+        },
+        series: [{ name: 'Revenue', data }],
+        xaxis: {
+          categories,
+          labels: { style: { colors: colors.textColor, fontSize: '11px' }, rotate: 0 },
+          tickAmount: isMobile ? 4 : 6
+        },
+        yaxis: {
+          labels: {
+            style: { colors: colors.textColor, fontSize: '11px' },
+            formatter: (v: number) => '₹' + Math.round(v).toLocaleString('en-IN')
+          }
+        },
+        colors: [colors.revenueColor],
+        fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0.01 } },
+        stroke: { curve: 'smooth', width: 2 },
+        grid: { borderColor: colors.gridColor, strokeDashArray: 3 },
+        tooltip: {
+          theme: this.getTheme(),
+          y: { formatter: (v: number) => '₹' + Math.round(v).toLocaleString('en-IN') }
+        },
+        dataLabels: { enabled: false }
+      }).render();
+    };
+
+    this.dashboardSvc.getRevenue(30).subscribe({
+      next: res => {
+        if (res.success && res.data?.length) {
+          draw(res.data.map(p => p.date), res.data.map(p => Math.round(p.amount)));
+        } else {
+          this.drawRevenueFallback(draw);
         }
       },
-      colors: [colors.revenueColor],
-      fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0.01 } },
-      stroke: { curve: 'smooth', width: 2 },
-      grid: { borderColor: colors.gridColor, strokeDashArray: 3 },
-      tooltip: { theme: this.getTheme() },
-      dataLabels: { enabled: false }
-    }).render();
-  }
-loadAvailability() {
-  this.loadingRooms = true;
-
-  this.dashboardSvc.getRoomAvailability(this.selectedDate)
-    .subscribe({
-      next: (res: any) => {
-        this.rooms = res?.data || [];
-        this.loadingRooms = false;
-      },
-      error: () => {
-        this.loadingRooms = false;
-      }
+      error: () => this.drawRevenueFallback(draw)
     });
-}
+  }
 
-onDateChange(event: any) {
-  this.selectedDate = event.target.value;
-  this.loadAvailability();
-}
+  private drawRevenueFallback(draw: (c: string[], d: number[]) => void) {
+    const categories = Array.from({ length: 30 }, (_, i) => {
+      const d = new Date(); d.setDate(d.getDate() - 29 + i); return this.fmtDay(d);
+    });
+    draw(categories, Array.from({ length: 30 }, () => Math.floor(Math.random() * 5000) + 2000));
+  }
+
   renderOccupancyChart() {
     const el = document.getElementById('occupancyChart');
     if (!el || typeof (window as any).ApexCharts === 'undefined') return;
     const colors = this.getChartColors();
     const isMobile = window.innerWidth <= 768;
     const days = isMobile ? 7 : 14;
-    const dates = Array.from({ length: days }, (_, i) => {
-      const d = new Date(); d.setDate(d.getDate() - (days - 1) + i);
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+    const draw = (categories: string[], data: number[]) => {
+      new (window as any).ApexCharts(el, {
+        chart: {
+          type: 'bar', height: this.getChartHeight(),
+          toolbar: { show: false }, background: 'transparent'
+        },
+        series: [{ name: 'Occupancy %', data }],
+        xaxis: { categories, labels: { style: { colors: colors.textColor, fontSize: '11px' } } },
+        yaxis: {
+          max: 100,
+          labels: { style: { colors: colors.textColor, fontSize: '11px' }, formatter: (v: number) => v + '%' }
+        },
+        colors: [colors.occupancyColor],
+        grid: { borderColor: colors.gridColor },
+        tooltip: { theme: this.getTheme() },
+        plotOptions: { bar: { borderRadius: 4, columnWidth: '55%' } },
+        dataLabels: { enabled: false }
+      }).render();
+    };
+
+    const fallback = () => {
+      const categories = Array.from({ length: days }, (_, i) => {
+        const d = new Date(); d.setDate(d.getDate() - (days - 1) + i); return this.fmtDay(d);
+      });
+      draw(categories, Array.from({ length: days }, () => Math.floor(Math.random() * 40) + 50));
+    };
+
+    this.dashboardSvc.getOccupancy(days).subscribe({
+      next: res => {
+        if (res.success && res.data?.length) {
+          draw(res.data.map(p => p.date), res.data.map(p => Math.round(p.rate)));
+        } else { fallback(); }
+      },
+      error: fallback
     });
-    const data = Array.from({ length: days }, () => Math.floor(Math.random() * 40) + 50);
-    new (window as any).ApexCharts(el, {
-      chart: {
-        type: 'bar', height: this.getChartHeight(),
-        toolbar: { show: false }, background: 'transparent'
-      },
-      series: [{ name: 'Occupancy %', data }],
-      xaxis: { categories: dates, labels: { style: { colors: colors.textColor, fontSize: '11px' } } },
-      yaxis: {
-        max: 100,
-        labels: { style: { colors: colors.textColor, fontSize: '11px' }, formatter: (v: number) => v + '%' }
-      },
-      colors: [colors.occupancyColor],
-      grid: { borderColor: colors.gridColor },
-      tooltip: { theme: this.getTheme() },
-      plotOptions: { bar: { borderRadius: 4, columnWidth: '55%' } },
-      dataLabels: { enabled: false }
-    }).render();
   }
 
   renderSourcesChart() {
     const el = document.getElementById('sourcesChart');
     if (!el || typeof (window as any).ApexCharts === 'undefined') return;
     const colors = this.getChartColors();
-    new (window as any).ApexCharts(el, {
-      chart: { type: 'donut', height: this.getChartHeight(), background: 'transparent' },
-      series: [45, 30, 25],
-      labels: ['Direct', 'Online (OTA)', 'Travel Agent'],
-      colors: colors.sourceColors,
-      legend: { position: 'bottom', labels: { colors: colors.textColor }, fontSize: '12px' },
-      tooltip: { theme: this.getTheme() },
-      plotOptions: {
-        pie: {
-          donut: {
-            size: '65%',
-            labels: {
-              show: true,
-              total: { show: true, label: 'Total', color: colors.textColor, formatter: () => '100%' }
+
+    const draw = (labels: string[], series: number[]) => {
+      new (window as any).ApexCharts(el, {
+        chart: { type: 'donut', height: this.getChartHeight(), background: 'transparent' },
+        series,
+        labels,
+        colors: colors.sourceColors,
+        legend: { position: 'bottom', labels: { colors: colors.textColor }, fontSize: '12px' },
+        tooltip: { theme: this.getTheme() },
+        plotOptions: {
+          pie: {
+            donut: {
+              size: '65%',
+              labels: {
+                show: true,
+                total: { show: true, label: 'Total', color: colors.textColor }
+              }
             }
           }
+        },
+        dataLabels: { enabled: false },
+        stroke: { colors: [colors.strokeColor] }
+      }).render();
+    };
+
+    this.dashboardSvc.getBookingSources().subscribe({
+      next: res => {
+        if (res.success && res.data?.length) {
+          draw(res.data.map(s => s.source), res.data.map(s => s.count));
+        } else {
+          draw(['Direct', 'Online (OTA)', 'Travel Agent'], [45, 30, 25]);
         }
       },
-      dataLabels: { enabled: false },
-      stroke: { colors: [colors.strokeColor] }
-    }).render();
+      error: () => draw(['Direct', 'Online (OTA)', 'Travel Agent'], [45, 30, 25])
+    });
   }
 }
