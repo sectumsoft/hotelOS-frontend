@@ -26,6 +26,19 @@ export class AuthService {
     return this.currentUser?.role === 'SuperAdmin' ? '/superadmin' : '/dashboard';
   }
 
+  /** Module keys a Staff user was granted. Admins are unrestricted. */
+  get modules(): string[] {
+    return this.currentUser?.modules ?? [];
+  }
+
+  /** Can the current user reach a feature module? Admins always can. */
+  canAccess(moduleKey: string): boolean {
+    const role = this.currentUser?.role;
+    if (role === 'HotelAdmin' || role === 'SuperAdmin') return true;
+    if (role === 'Staff') return this.modules.includes(moduleKey);
+    return false;
+  }
+
   login(req: LoginRequest): Observable<ApiResponse<LoginResponse>> {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json; charset=utf-8'

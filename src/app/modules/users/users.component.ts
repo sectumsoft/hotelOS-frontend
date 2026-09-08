@@ -1,145 +1,295 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { environment } from '../../../environments/environment';
-import { ApiResponse } from '../../shared/models';
-
-interface StaffUser {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  isActive: boolean;
-}
+import { ToastService } from '../../core/services/toast.service';
+import { UserService, CreateStaffPayload, UpdateStaffPayload } from '../../core/services/user.service';
+import { StaffMember, STAFF_MODULES } from '../../shared/models';
 
 @Component({
   selector: 'app-users',
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="p-6">
-      <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-gray-800">Staff Management</h1>
-        <button (click)="showForm = !showForm"
-          class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-          + Add Staff
-        </button>
+    <div class="users-page">
+      <div class="page-header">
+        <div class="page-title">
+          <h2>Staff Management</h2>
+          <p>{{ staff().length }} staff member{{ staff().length === 1 ? '' : 's' }}</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn-primary-custom" (click)="openCreate()">
+            <i class="bi bi-person-plus"></i> Add Staff
+          </button>
+        </div>
       </div>
 
-      <!-- Create Staff Form -->
-      @if (showForm) {
-        <div class="bg-white rounded-xl shadow p-6 mb-6">
-          <h2 class="text-lg font-semibold mb-4">New Staff Member</h2>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <input [(ngModel)]="form.name" placeholder="Full Name"
-              class="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-            <input [(ngModel)]="form.email" placeholder="Email" type="email"
-              class="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-            <input [(ngModel)]="form.tempPassword" placeholder="Temp Password" type="password"
-              class="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+      <div class="card-surface" style="padding:0;overflow:hidden">
+        @if (loading()) {
+          <div style="padding:2rem;text-align:center;color:var(--color-text-muted)">Loading…</div>
+        } @else if (staff().length === 0) {
+          <div class="empty-state">
+            <i class="bi bi-people"></i>
+            <h4>No staff members yet</h4>
+            <p>Add front-desk or housekeeping accounts and choose what they can access.</p>
           </div>
-          <div class="flex gap-3 mt-4">
-            <button (click)="createStaff()"
-              class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
-              Create
-            </button>
-            <button (click)="showForm = false"
-              class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300">
-              Cancel
-            </button>
-          </div>
-          @if (message()) {
-            <p class="mt-3 text-sm" [class]="messageClass()">{{ message() }}</p>
-          }
-        </div>
-      }
-
-      <!-- Staff List -->
-      <div class="bg-white rounded-xl shadow overflow-hidden">
-        <table class="w-full">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="text-left px-6 py-3 text-sm font-semibold text-gray-600">Name</th>
-              <th class="text-left px-6 py-3 text-sm font-semibold text-gray-600">Email</th>
-              <th class="text-left px-6 py-3 text-sm font-semibold text-gray-600">Role</th>
-              <th class="text-left px-6 py-3 text-sm font-semibold text-gray-600">Status</th>
-              <th class="text-left px-6 py-3 text-sm font-semibold text-gray-600">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (user of staff(); track user.id) {
-              <tr class="border-t hover:bg-gray-50">
-                <td class="px-6 py-4 font-medium">{{ user.name }}</td>
-                <td class="px-6 py-4 text-gray-600">{{ user.email }}</td>
-                <td class="px-6 py-4">
-                  <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">{{ user.role }}</span>
-                </td>
-                <td class="px-6 py-4">
-                  <span [class]="user.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
-                    class="px-2 py-1 rounded text-xs">
-                    {{ user.isActive ? 'Active' : 'Inactive' }}
-                  </span>
-                </td>
-                <td class="px-6 py-4">
-                  <button (click)="deleteStaff(user.id)"
-                    class="text-red-500 hover:text-red-700 text-sm">Remove</button>
-                </td>
+        } @else {
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th><th>Email</th><th>Module access</th><th>Status</th><th style="text-align:right">Actions</th>
               </tr>
-            }
-            @empty {
-              <tr><td colspan="5" class="px-6 py-8 text-center text-gray-400">No staff members yet</td></tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (u of staff(); track u.id) {
+                <tr>
+                  <td><strong>{{ u.name }}</strong></td>
+                  <td style="color:var(--color-text-muted)">{{ u.email }}</td>
+                  <td>
+                    @if (u.modules.length === 0) {
+                      <span style="color:var(--color-text-muted);font-size:.8rem">Dashboard only</span>
+                    } @else {
+                      <div class="mod-chips">
+                        @for (m of u.modules; track m) { <span class="mod-chip">{{ labelFor(m) }}</span> }
+                      </div>
+                    }
+                  </td>
+                  <td>
+                    <span class="badge-status" [class.available]="u.isActive" [class.maintenance]="!u.isActive">
+                      {{ u.isActive ? 'Active' : 'Disabled' }}
+                    </span>
+                  </td>
+                  <td style="text-align:right">
+                    <div style="display:inline-flex;gap:.4rem">
+                      <button class="btn-ghost" style="padding:.3rem .7rem;font-size:.8rem" (click)="openEdit(u)">
+                        <i class="bi bi-pencil"></i> Edit
+                      </button>
+                      <button class="btn-danger-ghost" style="padding:.3rem .7rem;font-size:.8rem" (click)="confirmDelete(u)">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
       </div>
     </div>
-  `
+
+    <!-- CREATE / EDIT MODAL -->
+    @if (modal() !== null) {
+      <div class="modal-overlay" (click)="modal.set(null)">
+        <div class="modal-panel" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>{{ modal() === 'create' ? 'Add Staff Member' : 'Edit Staff Member' }}</h3>
+            <button class="modal-close" (click)="modal.set(null)"><i class="bi bi-x"></i></button>
+          </div>
+
+          <div class="modal-body">
+            <div class="form-group" style="margin-bottom:1rem">
+              <label>Full Name</label>
+              <input class="form-input" [(ngModel)]="form.name" placeholder="e.g. Priya Menon" />
+            </div>
+
+            <div class="form-group" style="margin-bottom:1rem">
+              <label>Email</label>
+              <input class="form-input" type="email" [(ngModel)]="form.email"
+                     [readonly]="modal() === 'edit'"
+                     [style.opacity]="modal() === 'edit' ? .6 : 1"
+                     placeholder="name@hotel.com" />
+              @if (modal() === 'edit') {
+                <span style="font-size:.72rem;color:var(--color-text-muted)">Email can't be changed</span>
+              }
+            </div>
+
+            <div class="form-group" style="margin-bottom:1.25rem">
+              <label>{{ modal() === 'create' ? 'Temporary Password' : 'Reset Password (optional)' }}</label>
+              <div style="display:flex;gap:.5rem">
+                <input class="form-input" [(ngModel)]="form.password"
+                       [placeholder]="modal() === 'create' ? 'min 6 characters' : 'leave blank to keep current'" />
+                <button type="button" class="btn-ghost" (click)="genPassword()">Generate</button>
+              </div>
+            </div>
+
+            <label style="font-size:.8rem;font-weight:600;display:block;margin-bottom:.5rem">Module access</label>
+            <p style="font-size:.75rem;color:var(--color-text-muted);margin-bottom:.6rem">
+              Everyone can see the Dashboard. Tick the extra areas this person may use.
+            </p>
+            <div class="mod-grid">
+              @for (m of allModules; track m.key) {
+                <label class="mod-toggle" [class.on]="form.modules.includes(m.key)">
+                  <input type="checkbox" [checked]="form.modules.includes(m.key)" (change)="toggleModule(m.key)" />
+                  <i class="bi {{ m.icon }}"></i> {{ m.label }}
+                </label>
+              }
+            </div>
+
+            @if (modal() === 'edit') {
+              <label class="mod-toggle" style="margin-top:1rem;max-width:200px" [class.on]="form.isActive">
+                <input type="checkbox" [checked]="form.isActive" (change)="form.isActive = !form.isActive" />
+                <i class="bi bi-toggle-on"></i> Account active
+              </label>
+            }
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn-ghost" (click)="modal.set(null)">Cancel</button>
+            <button class="btn-primary-custom" (click)="save()" [disabled]="saving()">
+              {{ saving() ? 'Saving…' : (modal() === 'create' ? 'Create Staff' : 'Save Changes') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- DELETE CONFIRM -->
+    @if (deleteTarget()) {
+      <div class="modal-overlay" (click)="deleteTarget.set(null)">
+        <div class="modal-panel" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>Remove Staff</h3>
+            <button class="modal-close" (click)="deleteTarget.set(null)"><i class="bi bi-x"></i></button>
+          </div>
+          <div class="modal-body">
+            <p>Remove <strong>{{ deleteTarget()!.name }}</strong>? They will no longer be able to sign in.</p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-ghost" (click)="deleteTarget.set(null)">Cancel</button>
+            <button class="btn-danger-ghost" style="border-color:var(--color-red);color:var(--color-red)" (click)="doDelete()">
+              <i class="bi bi-trash"></i> Remove
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  `,
+  styles: [`
+    .empty-state { padding: 3rem 1rem; text-align: center; color: var(--color-text-muted); }
+    .empty-state i { font-size: 2rem; opacity: .5; }
+    .empty-state h4 { margin: .75rem 0 .25rem; }
+    .empty-state p { font-size: .85rem; }
+
+    .mod-chips { display: flex; flex-wrap: wrap; gap: .3rem; }
+    .mod-chip {
+      font-size: .72rem; font-weight: 600; padding: .12rem .5rem; border-radius: 100px;
+      background: var(--color-accent-soft); color: var(--color-accent);
+    }
+
+    .mod-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+    .mod-toggle {
+      display: flex; align-items: center; gap: .5rem; cursor: pointer;
+      padding: .55rem .7rem; border: 1px solid var(--color-border);
+      border-radius: var(--radius-md); font-size: .85rem; font-weight: 500;
+      transition: var(--transition);
+    }
+    .mod-toggle input { accent-color: var(--color-accent); }
+    .mod-toggle.on { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-accent); }
+
+    @media (max-width: 640px) { .mod-grid { grid-template-columns: 1fr; } }
+  `]
 })
 export class UsersComponent implements OnInit {
-  private http = inject(HttpClient);
+  private userSvc = inject(UserService);
+  private toast = inject(ToastService);
 
-  staff    = signal<StaffUser[]>([]);
-  message  = signal('');
-  messageClass = signal('text-green-600');
-  showForm = false;
+  allModules = STAFF_MODULES;
+  staff = signal<StaffMember[]>([]);
+  loading = signal(true);
+  saving = signal(false);
 
-  form = { name: '', email: '', tempPassword: '' };
+  modal = signal<'create' | 'edit' | null>(null);
+  editId = signal<string | null>(null);
+  deleteTarget = signal<StaffMember | null>(null);
 
-  ngOnInit() { this.loadStaff(); }
+  form = { name: '', email: '', password: '', modules: [] as string[], isActive: true };
 
-  loadStaff() {
-    this.http.get<ApiResponse<StaffUser[]>>(`${environment.apiUrl}/users`)
-      .subscribe(res => { if (res.success) this.staff.set(res.data); });
+  ngOnInit() { this.load(); }
+
+  load() {
+    this.loading.set(true);
+    this.userSvc.list().subscribe({
+      next: res => { if (res.success) this.staff.set(res.data); this.loading.set(false); },
+      error: () => { this.loading.set(false); }
+    });
   }
 
-  createStaff() {
-    if (!this.form.name || !this.form.email || !this.form.tempPassword) {
-      this.messageClass.set('text-red-600');
-      this.message.set('All fields are required');
-      return;
-    }
-    this.http.post<ApiResponse<string>>(`${environment.apiUrl}/users`, this.form)
-      .subscribe({
+  labelFor(key: string) { return this.allModules.find(m => m.key === key)?.label ?? key; }
+
+  openCreate() {
+    this.form = { name: '', email: '', password: '', modules: ['rooms', 'bookings'], isActive: true };
+    this.editId.set(null);
+    this.modal.set('create');
+  }
+
+  openEdit(u: StaffMember) {
+    this.form = { name: u.name, email: u.email, password: '', modules: [...u.modules], isActive: u.isActive };
+    this.editId.set(u.id);
+    this.modal.set('edit');
+  }
+
+  toggleModule(key: string) {
+    this.form.modules = this.form.modules.includes(key)
+      ? this.form.modules.filter(m => m !== key)
+      : [...this.form.modules, key];
+  }
+
+  genPassword() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+    this.form.password = Array.from({ length: 10 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  }
+
+  save() {
+    const name = this.form.name.trim();
+    const email = this.form.email.trim();
+    if (!name) { this.toast.error('Name is required'); return; }
+
+    if (this.modal() === 'create') {
+      if (!email) { this.toast.error('Email is required'); return; }
+      if (!this.form.password || this.form.password.length < 6) {
+        this.toast.error('Temporary password must be at least 6 characters'); return;
+      }
+      const payload: CreateStaffPayload = { name, email, tempPassword: this.form.password, modules: this.form.modules };
+      this.saving.set(true);
+      this.userSvc.create(payload).subscribe({
         next: res => {
-          if (res.success) {
-            this.messageClass.set('text-green-600');
-            this.message.set('Staff created successfully');
-            this.form = { name: '', email: '', tempPassword: '' };
-            this.showForm = false;
-            this.loadStaff();
-          }
+          this.saving.set(false);
+          if (res.success) { this.toast.success('Staff created'); this.modal.set(null); this.load(); }
+          else this.toast.error(res.message || 'Failed to create staff');
         },
-        error: () => {
-          this.messageClass.set('text-red-600');
-          this.message.set('Failed to create staff');
-        }
+        error: err => { this.saving.set(false); this.toast.error(err?.error?.message || 'Failed to create staff'); }
       });
+    } else {
+      const id = this.editId();
+      if (!id) return;
+      if (this.form.password && this.form.password.length < 6) {
+        this.toast.error('New password must be at least 6 characters'); return;
+      }
+      const payload: UpdateStaffPayload = {
+        name,
+        modules: this.form.modules,
+        isActive: this.form.isActive,
+        newPassword: this.form.password || undefined
+      };
+      this.saving.set(true);
+      this.userSvc.update(id, payload).subscribe({
+        next: res => {
+          this.saving.set(false);
+          if (res.success) { this.toast.success('Staff updated'); this.modal.set(null); this.load(); }
+          else this.toast.error(res.message || 'Failed to update staff');
+        },
+        error: err => { this.saving.set(false); this.toast.error(err?.error?.message || 'Failed to update staff'); }
+      });
+    }
   }
 
-  deleteStaff(id: string) {
-    if (!confirm('Remove this staff member?')) return;
-    this.http.delete<ApiResponse<boolean>>(`${environment.apiUrl}/users/${id}`)
-      .subscribe(res => { if (res.success) this.loadStaff(); });
+  confirmDelete(u: StaffMember) { this.deleteTarget.set(u); }
+
+  doDelete() {
+    const u = this.deleteTarget();
+    if (!u) return;
+    this.userSvc.remove(u.id).subscribe({
+      next: () => { this.toast.success('Staff removed'); this.deleteTarget.set(null); this.load(); },
+      error: () => { this.toast.error('Failed to remove staff'); }
+    });
   }
 }

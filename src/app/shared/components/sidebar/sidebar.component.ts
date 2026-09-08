@@ -209,16 +209,19 @@ export class SidebarComponent {
       ];
     }
 
-    const items: NavItem[] = [
+    const all: (NavItem & { module?: string })[] = [
       { label: 'Dashboard', icon: 'bi-grid-1x2', route: '/dashboard' },
-      { label: 'Rooms', icon: 'bi-door-open', route: '/rooms' },
-      { label: 'Bookings', icon: 'bi-calendar-check', route: '/bookings' },
-      { label: 'Guests', icon: 'bi-people', route: '/guests' },
-      { label: 'Reports', icon: 'bi-bar-chart', route: '/reports' },
-      { label: 'Settings', icon: 'bi-gear', route: '/settings' },
+      { label: 'Rooms', icon: 'bi-door-open', route: '/rooms', module: 'rooms' },
+      { label: 'Bookings', icon: 'bi-calendar-check', route: '/bookings', module: 'bookings' },
+      { label: 'Guests', icon: 'bi-people', route: '/guests', module: 'guests' },
+      { label: 'Reports', icon: 'bi-bar-chart', route: '/reports', module: 'reports' },
     ];
 
+    // Staff only see modules they've been granted; admins see everything.
+    const items: NavItem[] = all.filter(i => !i.module || this.auth.canAccess(i.module));
+
     if (role === 'HotelAdmin') {
+      items.push({ label: 'Settings', icon: 'bi-gear', route: '/settings' });
       items.push({ label: 'Users', icon: 'bi-person-gear', route: '/users' });
     }
 

@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
-import { roleGuard, notSuperAdminGuard } from './core/guards/role.guard';
+import { roleGuard, notSuperAdminGuard, moduleGuard } from './core/guards/role.guard';
 export const routes: Routes = [
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
   {
@@ -19,27 +19,27 @@ export const routes: Routes = [
       },
       {
         path: 'rooms',
-        canActivate: [notSuperAdminGuard],
+        canActivate: [moduleGuard('rooms')],
         loadChildren: () => import('./modules/rooms/rooms.routes').then(m => m.roomsRoutes)
       },
       {
         path: 'bookings',
-        canActivate: [notSuperAdminGuard],
+        canActivate: [moduleGuard('bookings')],
         loadChildren: () => import('./modules/bookings/bookings.routes').then(m => m.bookingsRoutes)
       },
       {
         path: 'guests',
-        canActivate: [notSuperAdminGuard],
+        canActivate: [moduleGuard('guests')],
         loadComponent: () => import('./modules/guests/guests.component').then(m => m.GuestsComponent)
       },
       {
         path: 'reports',
-        canActivate: [notSuperAdminGuard],
+        canActivate: [moduleGuard('reports')],
         loadComponent: () => import('./modules/reports/reports.component').then(m => m.ReportsComponent)
       },
       {
         path: 'settings',
-        canActivate: [notSuperAdminGuard],
+        canActivate: [roleGuard(['HotelAdmin'])],
         loadComponent: () => import('./modules/settings/settings.component').then(m => m.SettingsComponent)
       },
       {

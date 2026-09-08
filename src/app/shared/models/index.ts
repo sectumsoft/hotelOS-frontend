@@ -42,6 +42,24 @@ export interface UserInfo {
   role: string;
   tenantId: string;
   avatar?: string;
+  modules?: string[];
+}
+
+/** Feature modules a Staff user can be granted access to. */
+export const STAFF_MODULES: { key: string; label: string; icon: string }[] = [
+  { key: 'rooms', label: 'Rooms', icon: 'bi-door-open' },
+  { key: 'bookings', label: 'Bookings', icon: 'bi-calendar-check' },
+  { key: 'guests', label: 'Guests', icon: 'bi-people' },
+  { key: 'reports', label: 'Reports', icon: 'bi-bar-chart' },
+];
+
+export interface StaffMember {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  isActive: boolean;
+  modules: string[];
 }
 
 // Room types are now defined per hotel (Settings → Room Types), so this is free text.

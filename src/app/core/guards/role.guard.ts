@@ -29,3 +29,18 @@ export const notSuperAdminGuard: CanActivateFn = () => {
   }
   return true;
 };
+
+/**
+ * Gates a feature module for Staff by their granted permissions.
+ * Admins pass through; a Staff member without the module is sent to the dashboard.
+ */
+export const moduleGuard = (moduleKey: string): CanActivateFn => () => {
+  const auth   = inject(AuthService);
+  const router = inject(Router);
+
+  if (auth.currentUser?.role === 'SuperAdmin') { router.navigate(['/superadmin']); return false; }
+  if (auth.canAccess(moduleKey)) return true;
+
+  router.navigate(['/dashboard']);
+  return false;
+};
