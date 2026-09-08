@@ -51,6 +51,15 @@ export class AuthService {
     this.router.navigate(['/auth/login']);
   }
 
+  /** Keep the cached tenant name in sync after the hotel profile is edited. */
+  refreshTenantName(name: string): void {
+    const tenant = this.currentTenantSubject.value;
+    if (!tenant || !name || tenant.name === name) return;
+    const updated = { ...tenant, name };
+    localStorage.setItem('tenant', JSON.stringify(updated));
+    this.currentTenantSubject.next(updated);
+  }
+
   private getStoredUser(): UserInfo | null {
     try { return JSON.parse(localStorage.getItem('user') || 'null'); }
     catch { return null; }

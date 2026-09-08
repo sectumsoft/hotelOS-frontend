@@ -1,8 +1,9 @@
-import { Component, EventEmitter, Output, inject, signal, computed } from '@angular/core';
+import { Component, EventEmitter, Output, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { RoomService } from '../../../core/services/room.service';
+import { RoomTypeService } from '../../../core/services/room-type.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { BulkImportResult } from '../../../shared/models';
 
@@ -17,7 +18,6 @@ interface PreviewRow {
   errors: string[];
 }
 
-const TYPES = ['Standard', 'Deluxe', 'Suite'];
 const STATUSES = ['Available', 'Occupied', 'Maintenance'];
 
 @Component({
@@ -158,12 +158,22 @@ const STATUSES = ['Available', 'Occupied', 'Maintenance'];
     @keyframes spin { to { transform: rotate(360deg); } }
   `]
 })
-export class RoomImportComponent {
+export class RoomImportComponent implements OnInit {
   @Output() close = new EventEmitter<void>();
   @Output() imported = new EventEmitter<void>();
 
   private roomSvc = inject(RoomService);
+  private roomTypeSvc = inject(RoomTypeService);
   private toast = inject(ToastService);
+
+  private types: string[] = ['Standard', 'Deluxe', 'Suite'];
+
+  ngOnInit() {
+    this.roomTypeSvc.list().subscribe({
+      next: res => { if (res.success && res.data.length) this.types = res.data.map(t => t.name); },
+      error: () => {}
+    });
+  }
 
   fileName = signal('');
   rows = signal<PreviewRow[]>([]);
@@ -231,7 +241,7 @@ export class RoomImportComponent {
       const amenities = this.pick(r, 'Amenities', 'Amenity', 'Features')
         .split(/[,;|]/).map(a => a.trim()).filter(Boolean);
 
-      const type = TYPES.find(t => t.toLowerCase() === rawType.toLowerCase());
+      const type = this.types.find(t => t.toLowerCase() === rawType.toLowerCase());
       const status = STATUSES.find(s => s.toLowerCase() === rawStatus.toLowerCase());
       const price = rawPrice === '' ? null : Number(rawPrice);
 

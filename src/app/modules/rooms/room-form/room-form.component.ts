@@ -3,8 +3,10 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { RoomService } from '../../../core/services/room.service';
+import { RoomTypeService } from '../../../core/services/room-type.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { environment } from '../../../../environments/environment';
+import { RoomTypeOption } from '../../../shared/models';
 // in room-form.component.ts — top imports
 import { Observable } from 'rxjs';
 
@@ -41,9 +43,9 @@ import { Observable } from 'rxjs';
                   <label>Room Type *</label>
                   <select class="form-input" formControlName="roomType">
                     <option value="">Select type</option>
-                    <option value="Standard">Standard</option>
-                    <option value="Deluxe">Deluxe</option>
-                    <option value="Suite">Suite</option>
+                    @for (t of roomTypes; track t.id) {
+                      <option [value]="t.name">{{ t.name }}</option>
+                    }
                   </select>
                 </div>
               </div>
@@ -226,9 +228,12 @@ import { Observable } from 'rxjs';
 export class RoomFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private roomSvc = inject(RoomService);
+  private roomTypeSvc = inject(RoomTypeService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private toast = inject(ToastService);
+
+  roomTypes: RoomTypeOption[] = [];
 
   form = this.fb.group({
     roomNumber: ['', Validators.required],
@@ -253,6 +258,10 @@ export class RoomFormComponent implements OnInit {
   get f() { return this.form.controls; }
 
   ngOnInit() {
+    this.roomTypeSvc.list().subscribe({
+      next: res => { if (res.success) this.roomTypes = res.data; },
+      error: () => {}
+    });
     this.roomId = this.route.snapshot.params['id'];
     if (this.roomId) { this.isEdit = true; this.loadRoom(); }
   }

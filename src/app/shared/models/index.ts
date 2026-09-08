@@ -44,8 +44,25 @@ export interface UserInfo {
   avatar?: string;
 }
 
-export type RoomType = 'Standard' | 'Deluxe' | 'Suite';
+// Room types are now defined per hotel (Settings → Room Types), so this is free text.
+export type RoomType = string;
 export type RoomStatus = 'Available' | 'Occupied' | 'Maintenance';
+
+export interface RoomTypeOption {
+  id: string;
+  name: string;
+  roomCount: number;
+}
+
+export interface HotelSettings {
+  id?: string;
+  tenantId?: string;
+  hotelName: string;
+  subdomain: string;
+  email: string;
+  phone: string;
+  address: string;
+}
 
 export interface RoomImage {
   id: string;

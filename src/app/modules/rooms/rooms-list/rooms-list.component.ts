@@ -3,8 +3,9 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { RoomService } from '../../../core/services/room.service';
+import { RoomTypeService } from '../../../core/services/room-type.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { Room, RoomFilter, RoomStatus, RoomType } from '../../../shared/models';
+import { Room, RoomFilter, RoomStatus, RoomType, RoomTypeOption } from '../../../shared/models';
 import { environment } from '../../../../environments/environment';
 import { RoomImportComponent } from './room-import.component';
 
@@ -50,9 +51,9 @@ import { RoomImportComponent } from './room-import.component';
         </select>
         <select class="form-input" style="width:auto" [(ngModel)]="filter.roomType" (ngModelChange)="onFilterChange()">
           <option value="">All Types</option>
-          <option value="Standard">Standard</option>
-          <option value="Deluxe">Deluxe</option>
-          <option value="Suite">Suite</option>
+          @for (t of roomTypes; track t.id) {
+            <option [value]="t.name">{{ t.name }}</option>
+          }
         </select>
         <div class="filter-summary">
           <span class="badge-status available">{{ availableCount }} Available</span>
@@ -197,9 +198,11 @@ import { RoomImportComponent } from './room-import.component';
 })
 export class RoomsListComponent implements OnInit {
   private roomSvc = inject(RoomService);
+  private roomTypeSvc = inject(RoomTypeService);
   private toast = inject(ToastService);
   Math = Math;
 
+  roomTypes: RoomTypeOption[] = [];
   rooms: Room[] = [];
   loading = true;
   viewMode: 'grid' | 'list' = 'grid';
@@ -215,7 +218,13 @@ export class RoomsListComponent implements OnInit {
   get maintenanceCount() { return this.rooms.filter(r => r.status === 'Maintenance').length; }
   get pages(): number[] { return Array.from({length: this.totalPages}, (_, i) => i+1); }
 
-  ngOnInit() { this.loadRooms(); }
+  ngOnInit() {
+    this.loadRooms();
+    this.roomTypeSvc.list().subscribe({
+      next: res => { if (res.success) this.roomTypes = res.data; },
+      error: () => {}
+    });
+  }
 
   loadRooms() {
     this.loading = true;
