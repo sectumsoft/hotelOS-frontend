@@ -52,7 +52,7 @@ import { Observable } from 'rxjs';
 
               <div class="form-row">
                 <div class="form-group">
-                  <label>Price per Night (USD) *</label>
+                  <label>Price per Night (₹) *</label>
                   <input type="number" class="form-input" formControlName="pricePerNight" placeholder="e.g. 149" min="1" />
                 </div>
                 <div class="form-group">
@@ -167,7 +167,7 @@ import { Observable } from 'rxjs';
                 </div>
                 <div style="font-weight:600;margin:.25rem 0">{{ form.get('roomType')?.value || 'Select Type' }}</div>
                 <div style="font-family:var(--font-mono);color:var(--color-accent);font-size:1.1rem">
-                  \${{ form.get('pricePerNight')?.value || '0' }}<span style="font-size:.7rem;color:var(--color-text-muted);font-family:var(--font-sans)"> / night</span>
+                  ₹{{ form.get('pricePerNight')?.value || '0' }}<span style="font-size:.7rem;color:var(--color-text-muted);font-family:var(--font-sans)"> / night</span>
                 </div>
               </div>
             </div>

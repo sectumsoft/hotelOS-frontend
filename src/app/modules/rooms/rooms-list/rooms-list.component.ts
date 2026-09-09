@@ -127,7 +127,7 @@ import { RoomImportComponent } from './room-import.component';
                   <tr>
                     <td><strong>{{ room.roomNumber }}</strong></td>
                     <td>{{ room.roomType }}</td>
-                    <td><span style="font-family:var(--font-mono);color:var(--color-accent)">\${{ room.pricePerNight }}</span></td>
+                    <td><span style="font-family:var(--font-mono);color:var(--color-accent)">₹{{ room.pricePerNight }}</span></td>
                     <td>{{ room.amenities ? room.amenities.slice(0,3).join(', ') : '' }}</td>
                     <td><span class="badge-status {{ room.status.toLowerCase() }}">{{ room.status }}</span></td>
                     <td>

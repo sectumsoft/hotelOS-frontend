@@ -74,7 +74,7 @@ declare const ApexCharts: any;
 
           <div class="metric-card" style="--accent-color: var(--color-green)">
             <div class="metric-icon" style="background:var(--color-green-soft);color:var(--color-green)">
-              <i class="bi bi-currency-dollar"></i>
+              <i class="bi bi-currency-rupee"></i>
             </div>
             <div class="metric-value">{{ stats?.revenueToday | currency:'INR':'symbol':'1.0-0' }}</div>
             <div class="metric-label">Revenue Today</div>

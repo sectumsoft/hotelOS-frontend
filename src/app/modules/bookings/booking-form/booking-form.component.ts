@@ -145,7 +145,15 @@ import { Room } from '../../../shared/models';
         </div>
       </div>
     </div>
-  `
+  `,
+  styles: [`
+    @media (max-width: 900px) {
+      .booking-form-grid { grid-template-columns: 1fr !important; }
+    }
+    @media (max-width: 640px) {
+      .guest-info-grid, .dates-grid { grid-template-columns: 1fr !important; }
+    }
+  `]
 })
 export class BookingFormComponent implements OnInit {
   private fb = inject(FormBuilder);

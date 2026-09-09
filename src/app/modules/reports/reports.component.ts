@@ -47,7 +47,7 @@ import { ReportRow, ReportFilter } from '../../shared/models';
 
       <div class="report-summary" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem">
         <div class="card-surface" style="text-align:center">
-          <div style="font-size:1.6rem;font-weight:700;font-family:var(--font-mono);color:var(--color-accent)">{{ totalRevenue | currency:'USD':'symbol':'1.0-0' }}</div>
+          <div style="font-size:1.6rem;font-weight:700;font-family:var(--font-mono);color:var(--color-accent)">{{ totalRevenue | currency:'INR':'symbol':'1.0-0' }}</div>
           <div style="font-size:.75rem;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.06em;margin-top:.25rem">Total Revenue</div>
         </div>
         <div class="card-surface" style="text-align:center">
@@ -59,7 +59,7 @@ import { ReportRow, ReportFilter } from '../../shared/models';
           <div style="font-size:.75rem;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.06em;margin-top:.25rem">Completed</div>
         </div>
         <div class="card-surface" style="text-align:center">
-          <div style="font-size:1.6rem;font-weight:700;font-family:var(--font-mono)">{{ avgRevenue | currency:'USD':'symbol':'1.0-0' }}</div>
+          <div style="font-size:1.6rem;font-weight:700;font-family:var(--font-mono)">{{ avgRevenue | currency:'INR':'symbol':'1.0-0' }}</div>
           <div style="font-size:.75rem;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.06em;margin-top:.25rem">Avg per Booking</div>
         </div>
       </div>
