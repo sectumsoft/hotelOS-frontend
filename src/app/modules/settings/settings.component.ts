@@ -6,11 +6,12 @@ import { ToastService } from '../../core/services/toast.service';
 import { SettingsService } from '../../core/services/settings.service';
 import { RoomTypeService } from '../../core/services/room-type.service';
 import { RoomTypeOption } from '../../shared/models';
+import { PhoneInputComponent } from '../../shared/components/phone-input/phone-input.component';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, PhoneInputComponent],
   template: `
     <div class="settings-page">
       <div class="page-header">
@@ -67,7 +68,7 @@ import { RoomTypeOption } from '../../shared/models';
                 </div>
                 <div class="form-group">
                   <label>Phone</label>
-                  <input type="tel" class="form-input" formControlName="phone" />
+                  <app-phone-input formControlName="phone" placeholder="98765 43210"></app-phone-input>
                 </div>
               </div>
 

@@ -156,6 +156,16 @@ const STATUSES = ['Available', 'Occupied', 'Maintenance'];
     .result-skipped-label { font-size: 0.85rem; color: var(--color-text-muted); text-align: left; margin-bottom: 0.5rem; }
     .spin { display: inline-block; animation: spin 0.9s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 560px) {
+      .import-intro p { font-size: 0.8rem; }
+      .import-actions { flex-direction: column; align-items: stretch; }
+      .import-actions .btn-ghost, .import-actions .btn-primary-custom { width: 100%; justify-content: center; }
+      .file-name { text-align: center; }
+      .preview-table-wrap { max-height: 46vh; }
+      .preview-table-wrap .data-table { font-size: 0.72rem; }
+      .preview-table-wrap th, .preview-table-wrap td { padding: 0.35rem 0.4rem; white-space: nowrap; }
+    }
   `]
 })
 export class RoomImportComponent implements OnInit {

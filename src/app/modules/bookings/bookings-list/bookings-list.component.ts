@@ -30,15 +30,27 @@ import { Booking, BookingFilter, CheckInRequest, Bill } from '../../../shared/mo
           <i class="bi bi-search"></i>
           <input type="text" [(ngModel)]="filter.search" (ngModelChange)="onFilterChange()" placeholder="Search guest, room…" class="form-input" style="padding-left:2.25rem" />
         </div>
-        <select class="form-input" style="width:auto" [(ngModel)]="filter.status" (ngModelChange)="onFilterChange()">
-          <option value="">All Status</option>
-          <option value="Confirmed">Confirmed</option>
-          <option value="CheckedIn">Checked In</option>
-          <option value="CheckedOut">Checked Out</option>
-          <option value="Cancelled">Cancelled</option>
-        </select>
-        <input type="date" class="form-input" style="width:auto" [(ngModel)]="filter.checkInFrom" (ngModelChange)="onFilterChange()" />
-        <input type="date" class="form-input" style="width:auto" [(ngModel)]="filter.checkInTo" (ngModelChange)="onFilterChange()" />
+        <label class="fbar-field">
+          <span>Status</span>
+          <select class="form-input" [(ngModel)]="filter.status" (ngModelChange)="onFilterChange()">
+            <option value="">All status</option>
+            <option value="Confirmed">Confirmed</option>
+            <option value="CheckedIn">Checked In</option>
+            <option value="CheckedOut">Checked Out</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </label>
+        <label class="fbar-field">
+          <span>Check-in from</span>
+          <input type="date" class="form-input" [(ngModel)]="filter.checkInFrom" (ngModelChange)="onFilterChange()" />
+        </label>
+        <label class="fbar-field">
+          <span>Check-in to</span>
+          <input type="date" class="form-input" [(ngModel)]="filter.checkInTo" (ngModelChange)="onFilterChange()" />
+        </label>
+        @if (filter.search || filter.status || filter.checkInFrom || filter.checkInTo) {
+          <button class="btn-ghost fbar-clear" (click)="clearFilters()"><i class="bi bi-x-lg"></i> Clear</button>
+        }
       </div>
 
       @if (loading) {
@@ -542,7 +554,7 @@ export class BookingsListComponent implements OnInit {
   loading = true;
   totalCount = 0;
   totalPages = 1;
-  filter: BookingFilter = { pageNumber: 1, pageSize: 12 };
+  filter: BookingFilter = { pageNumber: 1, pageSize: 12, search: '', status: '' as any, checkInFrom: '', checkInTo: '' };
 
   // ── check-in state ──
   checkInBooking: Booking | null = null;
@@ -589,6 +601,10 @@ export class BookingsListComponent implements OnInit {
   }
 
   onFilterChange() { this.filter.pageNumber = 1; this.loadBookings(); }
+  clearFilters() {
+    this.filter = { pageNumber: 1, pageSize: this.filter.pageSize, search: '', status: '' as any, checkInFrom: '', checkInTo: '' };
+    this.loadBookings();
+  }
   prevPage() { if (this.filter.pageNumber > 1) { this.filter.pageNumber--; this.loadBookings(); } }
   nextPage() { if (this.filter.pageNumber < this.totalPages) { this.filter.pageNumber++; this.loadBookings(); } }
   goPage(p: number) { this.filter.pageNumber = p; this.loadBookings(); }

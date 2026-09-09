@@ -6,11 +6,12 @@ import { BookingService } from '../../../core/services/booking.service';
 import { RoomService } from '../../../core/services/room.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { Room } from '../../../shared/models';
+import { PhoneInputComponent } from '../../../shared/components/phone-input/phone-input.component';
 
 @Component({
   selector: 'app-booking-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, PhoneInputComponent],
   template: `
     <div class="booking-form-page">
       <div class="page-header">
@@ -37,7 +38,7 @@ import { Room } from '../../../shared/models';
               </div>
               <div class="form-group">
                 <label>Phone Number *</label>
-                <input type="tel" class="form-input" formControlName="guestPhone" placeholder="+1 555 0100" />
+                <app-phone-input formControlName="guestPhone" placeholder="98765 43210"></app-phone-input>
               </div>
             </div>
             <div class="form-group" style="margin-bottom:1.25rem">

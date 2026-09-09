@@ -43,18 +43,24 @@ import { RoomImportComponent } from './room-import.component';
           <i class="bi bi-search"></i>
           <input type="text" [(ngModel)]="filter.search" (ngModelChange)="onFilterChange()" placeholder="Search rooms…" class="form-input" style="padding-left:2.25rem" />
         </div>
-        <select class="form-input" style="width:auto" [(ngModel)]="filter.status" (ngModelChange)="onFilterChange()">
-          <option value="">All Status</option>
-          <option value="Available">Available</option>
-          <option value="Occupied">Occupied</option>
-          <option value="Maintenance">Maintenance</option>
-        </select>
-        <select class="form-input" style="width:auto" [(ngModel)]="filter.roomType" (ngModelChange)="onFilterChange()">
-          <option value="">All Types</option>
-          @for (t of roomTypes; track t.id) {
-            <option [value]="t.name">{{ t.name }}</option>
-          }
-        </select>
+        <label class="fbar-field">
+          <span>Status</span>
+          <select class="form-input" [(ngModel)]="filter.status" (ngModelChange)="onFilterChange()">
+            <option value="">All status</option>
+            <option value="Available">Available</option>
+            <option value="Occupied">Occupied</option>
+            <option value="Maintenance">Maintenance</option>
+          </select>
+        </label>
+        <label class="fbar-field">
+          <span>Type</span>
+          <select class="form-input" [(ngModel)]="filter.roomType" (ngModelChange)="onFilterChange()">
+            <option value="">All types</option>
+            @for (t of roomTypes; track t.id) {
+              <option [value]="t.name">{{ t.name }}</option>
+            }
+          </select>
+        </label>
         <div class="filter-summary">
           <span class="badge-status available">{{ availableCount }} Available</span>
           <span class="badge-status occupied">{{ occupiedCount }} Occupied</span>
@@ -211,7 +217,7 @@ export class RoomsListComponent implements OnInit {
   totalCount = 0;
   totalPages = 1;
 
-  filter: RoomFilter = { pageNumber: 1, pageSize: 12 };
+  filter: RoomFilter = { pageNumber: 1, pageSize: 12, search: '', status: '' as any, roomType: '' as any };
 
   get availableCount() { return this.rooms.filter(r => r.status === 'Available').length; }
   get occupiedCount() { return this.rooms.filter(r => r.status === 'Occupied').length; }
