@@ -16,6 +16,7 @@ export class RoomService {
     if (filter.search) params = params.set('search', filter.search);
     if (filter.status) params = params.set('status', filter.status);
     if (filter.roomType) params = params.set('roomType', filter.roomType);
+    if (filter.skipCount) params = params.set('skipCount', 'true');
     return this.http.get<ApiResponse<PagedResult<Room>>>(this.base, { params });
   }
 

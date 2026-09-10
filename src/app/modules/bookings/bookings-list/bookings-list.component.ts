@@ -59,6 +59,15 @@ import { Booking, BookingFilter, CheckInRequest, Bill } from '../../../shared/mo
             <div class="skeleton" style="height:220px;border-radius:var(--radius-lg)"></div>
           }
         </div>
+      } @else if (loadError) {
+        <div class="empty-state">
+          <i class="bi bi-wifi-off"></i>
+          <h4>Couldn’t load bookings</h4>
+          <p>The server didn’t respond. Check your connection and try again.</p>
+          <button class="btn-primary-custom" style="margin-top:0.75rem" (click)="loadBookings()">
+            <i class="bi bi-arrow-clockwise"></i> Retry
+          </button>
+        </div>
       } @else if (bookings.length === 0) {
         <div class="empty-state">
           <i class="bi bi-calendar-x"></i>
@@ -131,16 +140,18 @@ import { Booking, BookingFilter, CheckInRequest, Bill } from '../../../shared/mo
         </div>
       }
 
-      <div class="pagination-wrapper">
-        <span class="pagination-info">{{ totalCount }} bookings</span>
-        <div class="pagination-controls">
-          <button (click)="prevPage()" [disabled]="filter.pageNumber===1"><i class="bi bi-chevron-left"></i></button>
-          @for (p of pages; track p) {
-            <button [class.active]="p===filter.pageNumber" (click)="goPage(p)">{{ p }}</button>
-          }
-          <button (click)="nextPage()" [disabled]="filter.pageNumber===totalPages"><i class="bi bi-chevron-right"></i></button>
+      @if (!loadError && !loading && bookings.length > 0) {
+        <div class="pagination-wrapper">
+          <span class="pagination-info">{{ totalCount }} bookings</span>
+          <div class="pagination-controls">
+            <button (click)="prevPage()" [disabled]="filter.pageNumber===1"><i class="bi bi-chevron-left"></i></button>
+            @for (p of pages; track p) {
+              <button [class.active]="p===filter.pageNumber" (click)="goPage(p)">{{ p }}</button>
+            }
+            <button (click)="nextPage()" [disabled]="filter.pageNumber===totalPages"><i class="bi bi-chevron-right"></i></button>
+          </div>
         </div>
-      </div>
+      }
     </div>
 
     <!-- Check-In Modal -->
@@ -552,9 +563,14 @@ export class BookingsListComponent implements OnInit {
 
   bookings: Booking[] = [];
   loading = true;
+  loadError = false;
   totalCount = 0;
   totalPages = 1;
   filter: BookingFilter = { pageNumber: 1, pageSize: 12, search: '', status: '' as any, checkInFrom: '', checkInTo: '' };
+
+  /** Set just before a pure page-nav reload so loadBookings() can reuse the cached
+   *  total instead of asking the server to COUNT the same filter again. */
+  private pageNavOnly = false;
 
   // ── check-in state ──
   checkInBooking: Booking | null = null;
@@ -583,19 +599,28 @@ export class BookingsListComponent implements OnInit {
   // ── bookings list ──
   loadBookings() {
     this.loading = true;
+    const skipCount = this.pageNavOnly && this.totalCount > 0;
+    this.pageNavOnly = false;
+    this.filter.skipCount = skipCount;
     this.bookingSvc.getAll(this.filter).subscribe({
       next: res => {
         if (res.success) {
           this.bookings = res.data.items;
-          this.totalCount = res.data.totalCount;
-          this.totalPages = res.data.totalPages;
+          if (!skipCount) {
+            this.totalCount = res.data.totalCount;
+            this.totalPages = res.data.totalPages;
+          }
+          this.loadError = false;
         }
         this.loading = false;
       },
       error: () => {
-        this.bookings = this.getMockBookings();
+        this.bookings = [];
+        this.totalCount = 0;
+        this.totalPages = 1;
+        this.loadError = true;
         this.loading = false;
-        this.totalCount = this.bookings.length;
+        this.toast.error('Could not load bookings. Please try again.');
       }
     });
   }
@@ -605,9 +630,9 @@ export class BookingsListComponent implements OnInit {
     this.filter = { pageNumber: 1, pageSize: this.filter.pageSize, search: '', status: '' as any, checkInFrom: '', checkInTo: '' };
     this.loadBookings();
   }
-  prevPage() { if (this.filter.pageNumber > 1) { this.filter.pageNumber--; this.loadBookings(); } }
-  nextPage() { if (this.filter.pageNumber < this.totalPages) { this.filter.pageNumber++; this.loadBookings(); } }
-  goPage(p: number) { this.filter.pageNumber = p; this.loadBookings(); }
+  prevPage() { if (this.filter.pageNumber > 1) { this.filter.pageNumber--; this.pageNavOnly = true; this.loadBookings(); } }
+  nextPage() { if (this.filter.pageNumber < this.totalPages) { this.filter.pageNumber++; this.pageNavOnly = true; this.loadBookings(); } }
+  goPage(p: number) { this.filter.pageNumber = p; this.pageNavOnly = true; this.loadBookings(); }
 
   formatStatus(s: string) {
     return s === 'CheckedIn' ? 'Checked In' : s === 'CheckedOut' ? 'Checked Out' : s;
@@ -824,14 +849,6 @@ export class BookingsListComponent implements OnInit {
     });
   }
 
-  getMockBookings(): Booking[] {
-    return [
-      { id: '1', bookingNumber: 'BK-0001', tenantId: 't1', guestId: 'g1', guestName: 'James Wilson', guestPhone: '+1 555 0101', roomId: 'r1', roomNumber: '201', roomType: 'Deluxe', checkInDate: '2024-03-15', checkOutDate: '2024-03-18', totalNights: 3, numberOfGuests: 2, totalAmount: 447, advancePaid: true, advanceAmount: 150, balanceAmount: 297, status: 'Confirmed', createdAt: '', updatedAt: '' },
-      { id: '2', bookingNumber: 'BK-0002', tenantId: 't1', guestId: 'g2', guestName: 'Sarah Chen', guestPhone: '+1 555 0102', roomId: 'r2', roomNumber: '301', roomType: 'Suite', checkInDate: '2024-03-14', checkOutDate: '2024-03-17', totalNights: 3, numberOfGuests: 3, totalAmount: 897, advancePaid: true, advanceAmount: 300, balanceAmount: 597, status: 'CheckedIn', createdAt: '', updatedAt: '' },
-      { id: '3', bookingNumber: 'BK-0003', tenantId: 't1', guestId: 'g3', guestName: 'Robert Martinez', guestPhone: '+1 555 0103', roomId: 'r3', roomNumber: '102', roomType: 'Standard', checkInDate: '2024-03-10', checkOutDate: '2024-03-12', totalNights: 2, numberOfGuests: 1, totalAmount: 178, advancePaid: false, balanceAmount: 178, status: 'CheckedOut', createdAt: '', updatedAt: '' },
-      { id: '4', bookingNumber: 'BK-0004', tenantId: 't1', guestId: 'g4', guestName: 'Emily Johnson', guestPhone: '+1 555 0104', roomId: 'r4', roomNumber: '202', roomType: 'Deluxe', checkInDate: '2024-03-20', checkOutDate: '2024-03-22', totalNights: 2, numberOfGuests: 2, totalAmount: 298, advancePaid: false, balanceAmount: 298, status: 'Confirmed', createdAt: '', updatedAt: '' },
-    ];
-  }
 }
 
 // ── local interface for guest KYC ──

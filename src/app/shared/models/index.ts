@@ -126,6 +126,8 @@ export interface RoomFilter {
   roomType?: RoomType;
   pageNumber: number;
   pageSize: number;
+  /** Skip the server-side total count when only the page changed (total is cached client-side). */
+  skipCount?: boolean;
 }
 
 export interface BulkRoomRow {
@@ -211,6 +213,8 @@ export interface BookingFilter {
   checkInTo?: string;
   pageNumber: number;
   pageSize: number;
+  /** Skip the server-side total count when only the page changed (total is cached client-side). */
+  skipCount?: boolean;
 }
 
 export interface DashboardStats {

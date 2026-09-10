@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { ThemeService } from '../../core/services/theme.service';
+import { ToastService } from '../../core/services/toast.service';
 import { DashboardStats } from '../../shared/models';
 import { AvailabilityCalendarComponent } from './availability-calendar.component';
 
@@ -33,6 +34,14 @@ declare const ApexCharts: any;
           @for (i of [1,2,3,4]; track i) {
             <div class="metric-card skeleton" style="height:130px"></div>
           }
+        </div>
+      } @else if (statsError) {
+        <div class="card-surface" style="text-align:center;padding:2rem;color:var(--color-text-muted)">
+          <i class="bi bi-wifi-off" style="font-size:1.75rem;display:block;margin-bottom:.5rem"></i>
+          Couldn’t load today’s figures.
+          <button class="btn-ghost" style="margin-left:.75rem" (click)="loadStats()">
+            <i class="bi bi-arrow-clockwise"></i> Retry
+          </button>
         </div>
       } @else {
         <div class="stats-grid">
@@ -120,6 +129,11 @@ declare const ApexCharts: any;
   styles: [`
     .dashboard-page { display: flex; flex-direction: column; gap: 0; }
 
+    .chart-empty {
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+      height: 220px; color: var(--color-text-muted); font-size: 0.85rem;
+    }
+
     /* Date pill */
     .date-pill {
       display: flex; align-items: center; gap: 0.5rem;
@@ -201,9 +215,11 @@ declare const ApexCharts: any;
 export class DashboardComponent implements OnInit {
   private dashboardSvc = inject(DashboardService);
   private themeSvc = inject(ThemeService);
+  private toast = inject(ToastService);
 
   stats: DashboardStats | null = null;
   loading = true;
+  statsError = false;
   today = new Date().toLocaleDateString('en-US', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
   });
@@ -237,9 +253,20 @@ export class DashboardComponent implements OnInit {
   }
 
   loadStats() {
+    this.loading = true;
+    this.statsError = false;
     this.dashboardSvc.getStats().subscribe({
-      next: res => { if (res.success) this.stats = res.data; this.loading = false; },
-      error: () => { this.stats = this.getMockStats(); this.loading = false; }
+      next: res => {
+        if (res.success) { this.stats = res.data; this.statsError = false; }
+        else { this.statsError = true; }
+        this.loading = false;
+      },
+      error: () => {
+        this.stats = null;
+        this.statsError = true;
+        this.loading = false;
+        this.toast.error('Could not load dashboard figures.');
+      }
     });
   }
 
@@ -251,16 +278,11 @@ export class DashboardComponent implements OnInit {
     }, 500);
   }
 
-  getMockStats(): DashboardStats {
-    return {
-      totalRooms: 48, occupiedRooms: 32, availableRooms: 12,
-      todayBookings: 7, revenueToday: 4850, occupancyRate: 66,
-      revenueChange: 12, bookingChange: 8
-    };
-  }
-
-  private fmtDay(d: Date) {
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  /** Replace a chart container with a small inline notice when its data can't be loaded. */
+  private chartUnavailable(id: string) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML =
+      '<div class="chart-empty"><i class="bi bi-bar-chart-line"></i> Chart data unavailable</div>';
   }
 
   renderRevenueChart() {
@@ -305,18 +327,11 @@ export class DashboardComponent implements OnInit {
         if (res.success && res.data?.length) {
           draw(res.data.map(p => p.date), res.data.map(p => Math.round(p.amount)));
         } else {
-          this.drawRevenueFallback(draw);
+          this.chartUnavailable('revenueChart');
         }
       },
-      error: () => this.drawRevenueFallback(draw)
+      error: () => this.chartUnavailable('revenueChart')
     });
-  }
-
-  private drawRevenueFallback(draw: (c: string[], d: number[]) => void) {
-    const categories = Array.from({ length: 30 }, (_, i) => {
-      const d = new Date(); d.setDate(d.getDate() - 29 + i); return this.fmtDay(d);
-    });
-    draw(categories, Array.from({ length: 30 }, () => Math.floor(Math.random() * 5000) + 2000));
   }
 
   renderOccupancyChart() {
@@ -346,20 +361,13 @@ export class DashboardComponent implements OnInit {
       }).render();
     };
 
-    const fallback = () => {
-      const categories = Array.from({ length: days }, (_, i) => {
-        const d = new Date(); d.setDate(d.getDate() - (days - 1) + i); return this.fmtDay(d);
-      });
-      draw(categories, Array.from({ length: days }, () => Math.floor(Math.random() * 40) + 50));
-    };
-
     this.dashboardSvc.getOccupancy(days).subscribe({
       next: res => {
         if (res.success && res.data?.length) {
           draw(res.data.map(p => p.date), res.data.map(p => Math.round(p.rate)));
-        } else { fallback(); }
+        } else { this.chartUnavailable('occupancyChart'); }
       },
-      error: fallback
+      error: () => this.chartUnavailable('occupancyChart')
     });
   }
 
@@ -397,10 +405,10 @@ export class DashboardComponent implements OnInit {
         if (res.success && res.data?.length) {
           draw(res.data.map(s => s.source), res.data.map(s => s.count));
         } else {
-          draw(['Direct', 'Online (OTA)', 'Travel Agent'], [45, 30, 25]);
+          this.chartUnavailable('sourcesChart');
         }
       },
-      error: () => draw(['Direct', 'Online (OTA)', 'Travel Agent'], [45, 30, 25])
+      error: () => this.chartUnavailable('sourcesChart')
     });
   }
 }

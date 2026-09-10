@@ -20,12 +20,7 @@ export class ReportService {
     return this.http.get<ApiResponse<PagedResult<ReportRow>>>(this.base, { params });
   }
 
-  exportExcel(filter: ReportFilter): Observable<Blob> {
-    const params = new HttpParams()
-      .set('dateFrom', filter.dateFrom)
-      .set('dateTo', filter.dateTo);
-    return this.http.get(`${this.base}/export/excel`, { params, responseType: 'blob' });
-  }
+  // Excel export is built client-side from the loaded rows (see ReportsComponent.exportExcel).
 
   exportCsv(filter: ReportFilter): Observable<Blob> {
     const params = new HttpParams()

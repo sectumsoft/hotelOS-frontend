@@ -17,6 +17,7 @@ export class BookingService {
     if (filter.status) params = params.set('status', filter.status);
     if (filter.checkInFrom) params = params.set('checkInFrom', filter.checkInFrom);
     if (filter.checkInTo) params = params.set('checkInTo', filter.checkInTo);
+    if (filter.skipCount) params = params.set('skipCount', 'true');
     return this.http.get<ApiResponse<PagedResult<Booking>>>(this.base, { params });
   }
 

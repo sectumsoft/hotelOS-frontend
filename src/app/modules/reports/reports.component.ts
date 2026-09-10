@@ -65,7 +65,19 @@ import { ReportRow, ReportFilter } from '../../shared/models';
       </div>
 
       @if (loading) {
-        <div class="page-loading"><div class="loading-spinner"></div><span>Loading report…</span></div>
+        <div class="card-surface" style="padding:0;overflow:hidden">
+          @for (i of [1,2,3,4,5,6,7,8]; track i) {
+            <div class="skeleton" style="height:44px;margin:0.5rem 0.75rem;border-radius:var(--radius-sm)"></div>
+          }
+        </div>
+      } @else if (loadError) {
+        <div class="card-surface" style="text-align:center;padding:3rem;color:var(--color-text-muted)">
+          <i class="bi bi-wifi-off" style="font-size:2rem;display:block;margin-bottom:.75rem"></i>
+          Couldn’t load the report. Check your connection and try again.
+          <div><button class="btn-ghost" style="margin-top:.75rem" (click)="loadReport()">
+            <i class="bi bi-arrow-clockwise"></i> Retry
+          </button></div>
+        </div>
       } @else if (rows.length === 0) {
         <div class="card-surface" style="text-align:center;padding:3rem;color:var(--color-text-muted)">
           <i class="bi bi-bar-chart" style="font-size:2rem;display:block;margin-bottom:.75rem"></i>
@@ -123,6 +135,7 @@ export class ReportsComponent implements OnInit {
 
   rows: ReportRow[] = [];
   loading = false;
+  loadError = false;
   filter: ReportFilter = {
     dateFrom: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     dateTo: new Date().toISOString().split('T')[0],
@@ -138,16 +151,20 @@ export class ReportsComponent implements OnInit {
 
   loadReport() {
     this.loading = true;
+    this.loadError = false;
     this.reportSvc.getReport(this.filter).subscribe({
       next: res => {
         if (res.success) {
           this.rows = res.data.items;
         } else {
+          this.loadError = true;
           this.toast.error('Failed to load report.');
         }
         this.loading = false;
       },
       error: err => {
+        this.rows = [];
+        this.loadError = true;
         this.toast.error('Error loading report. Please try again.');
         console.error('Report load error:', err);
         this.loading = false;
@@ -169,18 +186,44 @@ export class ReportsComponent implements OnInit {
     });
   }
 
-  exportExcel() {
-    this.reportSvc.exportExcel(this.filter).subscribe({
-      next: blob => {
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `hotel-report-${this.filter.dateFrom}-to-${this.filter.dateTo}.xlsx`;
-        a.click();
-        URL.revokeObjectURL(a.href);
-        this.toast.success('Excel exported!');
-      },
-      error: () => this.toast.error('Excel export failed.')
-    });
+  async exportExcel() {
+    if (!this.rows.length) {
+      this.toast.info('Run a report with results before exporting.');
+      return;
+    }
+    try {
+      // Genuine .xlsx built client-side from the loaded rows (xlsx lib is lazy-loaded).
+      const XLSX = await import('xlsx');
+      const data = this.rows.map(r => ({
+        'Booking ID': r.bookingNumber,
+        'Guest': r.guestName,
+        'Room': r.roomNumber,
+        'Type': r.roomType,
+        'Check-In': r.checkInDate,
+        'Check-Out': r.checkOutDate,
+        'Nights': r.nights,
+        'Total': r.totalAmount,
+        'Advance': r.advanceAmount,
+        'Balance': r.balanceAmount,
+        'Status': r.status,
+      }));
+      const ws = XLSX.utils.json_to_sheet(data);
+      ws['!cols'] = [12, 22, 8, 10, 12, 12, 7, 12, 12, 12, 12].map(wch => ({ wch }));
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Bookings');
+      const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([buf], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `hotel-report-${this.filter.dateFrom}-to-${this.filter.dateTo}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      this.toast.success('Excel exported!');
+    } catch {
+      this.toast.error('Excel export failed.');
+    }
   }
 
   print() { window.print(); }

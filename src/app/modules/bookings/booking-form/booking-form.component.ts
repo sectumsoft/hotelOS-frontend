@@ -209,6 +209,7 @@ export class BookingFormComponent implements OnInit {
       },
       error: () => {
         this.availableRooms = [];
+        this.toast.error('Could not load available rooms. Check your connection and refresh.');
         if (this.isEdit) this.loadBooking();
       }
     });

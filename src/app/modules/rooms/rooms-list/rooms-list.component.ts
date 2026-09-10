@@ -74,6 +74,15 @@ import { RoomImportComponent } from './room-import.component';
             <div class="skeleton" style="height:320px;border-radius:var(--radius-lg)"></div>
           }
         </div>
+      } @else if (loadError) {
+        <div class="empty-state">
+          <i class="bi bi-wifi-off"></i>
+          <h4>Couldn’t load rooms</h4>
+          <p>The server didn’t respond. Check your connection and try again.</p>
+          <button class="btn-primary-custom" style="margin-top:0.75rem" (click)="loadRooms()">
+            <i class="bi bi-arrow-clockwise"></i> Retry
+          </button>
+        </div>
       } @else if (rooms.length === 0) {
         <div class="empty-state">
           <i class="bi bi-door-open"></i>
@@ -150,16 +159,18 @@ import { RoomImportComponent } from './room-import.component';
         }
       }
 
-      <div class="pagination-wrapper">
-        <span class="pagination-info">Showing {{ (filter.pageNumber-1)*filter.pageSize+1 }}–{{ Math.min(filter.pageNumber*filter.pageSize, totalCount) }} of {{ totalCount }}</span>
-        <div class="pagination-controls">
-          <button (click)="prevPage()" [disabled]="filter.pageNumber===1"><i class="bi bi-chevron-left"></i></button>
-          @for (p of pages; track p) {
-            <button [class.active]="p===filter.pageNumber" (click)="goPage(p)">{{ p }}</button>
-          }
-          <button (click)="nextPage()" [disabled]="filter.pageNumber===totalPages"><i class="bi bi-chevron-right"></i></button>
+      @if (!loadError && !loading && rooms.length > 0) {
+        <div class="pagination-wrapper">
+          <span class="pagination-info">Showing {{ (filter.pageNumber-1)*filter.pageSize+1 }}–{{ Math.min(filter.pageNumber*filter.pageSize, totalCount) }} of {{ totalCount }}</span>
+          <div class="pagination-controls">
+            <button (click)="prevPage()" [disabled]="filter.pageNumber===1"><i class="bi bi-chevron-left"></i></button>
+            @for (p of pages; track p) {
+              <button [class.active]="p===filter.pageNumber" (click)="goPage(p)">{{ p }}</button>
+            }
+            <button (click)="nextPage()" [disabled]="filter.pageNumber===totalPages"><i class="bi bi-chevron-right"></i></button>
+          </div>
         </div>
-      </div>
+      }
     </div>
 
     @if (deleteTarget) {
@@ -211,6 +222,7 @@ export class RoomsListComponent implements OnInit {
   roomTypes: RoomTypeOption[] = [];
   rooms: Room[] = [];
   loading = true;
+  loadError = false;
   viewMode: 'grid' | 'list' = 'grid';
   deleteTarget: Room | null = null;
   showImport = false;
@@ -218,6 +230,10 @@ export class RoomsListComponent implements OnInit {
   totalPages = 1;
 
   filter: RoomFilter = { pageNumber: 1, pageSize: 12, search: '', status: '' as any, roomType: '' as any };
+
+  /** Set just before a pure page-nav reload so loadRooms() can reuse the cached
+   *  total instead of asking the server to COUNT the same filter again. */
+  private pageNavOnly = false;
 
   get availableCount() { return this.rooms.filter(r => r.status === 'Available').length; }
   get occupiedCount() { return this.rooms.filter(r => r.status === 'Occupied').length; }
@@ -234,23 +250,36 @@ export class RoomsListComponent implements OnInit {
 
   loadRooms() {
     this.loading = true;
+    const skipCount = this.pageNavOnly && this.totalCount > 0;
+    this.pageNavOnly = false;
+    this.filter.skipCount = skipCount;
     this.roomSvc.getAll(this.filter).subscribe({
       next: res => {
         if (res.success) {
           this.rooms = res.data.items;
-          this.totalCount = res.data.totalCount;
-          this.totalPages = res.data.totalPages;
+          if (!skipCount) {
+            this.totalCount = res.data.totalCount;
+            this.totalPages = res.data.totalPages;
+          }
+          this.loadError = false;
         }
         this.loading = false;
       },
-      error: () => { this.rooms = this.getMockRooms(); this.loading = false; this.totalCount = this.rooms.length; }
+      error: () => {
+        this.rooms = [];
+        this.totalCount = 0;
+        this.totalPages = 1;
+        this.loadError = true;
+        this.loading = false;
+        this.toast.error('Could not load rooms. Please try again.');
+      }
     });
   }
 
   onFilterChange() { this.filter.pageNumber = 1; this.loadRooms(); }
-  prevPage() { if (this.filter.pageNumber > 1) { this.filter.pageNumber--; this.loadRooms(); } }
-  nextPage() { if (this.filter.pageNumber < this.totalPages) { this.filter.pageNumber++; this.loadRooms(); } }
-  goPage(p: number) { this.filter.pageNumber = p; this.loadRooms(); }
+  prevPage() { if (this.filter.pageNumber > 1) { this.filter.pageNumber--; this.pageNavOnly = true; this.loadRooms(); } }
+  nextPage() { if (this.filter.pageNumber < this.totalPages) { this.filter.pageNumber++; this.pageNavOnly = true; this.loadRooms(); } }
+  goPage(p: number) { this.filter.pageNumber = p; this.pageNavOnly = true; this.loadRooms(); }
 
   confirmDelete(room: Room) { this.deleteTarget = room; }
 
@@ -274,14 +303,4 @@ getImageUrl(url: string): string {
     return `https://placehold.co/400x200/${colors[type] || '1e293b'}/6b7280?text=${type}`;
   }
 
-  getMockRooms(): Room[] {
-    return [
-      { id:'1', tenantId:'t1', roomNumber:'101', roomType:'Standard', pricePerNight:89, status:'Available', amenities:['TV','AC','WiFi'], images:[], description:'', createdAt:'', updatedAt:'' },
-      { id:'2', tenantId:'t1', roomNumber:'201', roomType:'Deluxe', pricePerNight:149, status:'Occupied', amenities:['TV','AC','WiFi','MiniBar'], images:[], description:'', createdAt:'', updatedAt:'' },
-      { id:'3', tenantId:'t1', roomNumber:'301', roomType:'Suite', pricePerNight:299, status:'Available', amenities:['TV','AC','WiFi','MiniBar','Room Service','Parking'], images:[], description:'', createdAt:'', updatedAt:'' },
-      { id:'4', tenantId:'t1', roomNumber:'102', roomType:'Standard', pricePerNight:89, status:'Maintenance', amenities:['TV','AC'], images:[], description:'', createdAt:'', updatedAt:'' },
-      { id:'5', tenantId:'t1', roomNumber:'202', roomType:'Deluxe', pricePerNight:149, status:'Available', amenities:['TV','AC','WiFi','MiniBar'], images:[], description:'', createdAt:'', updatedAt:'' },
-      { id:'6', tenantId:'t1', roomNumber:'302', roomType:'Suite', pricePerNight:349, status:'Occupied', amenities:['TV','AC','WiFi','MiniBar','Room Service'], images:[], description:'', createdAt:'', updatedAt:'' },
-    ];
-  }
 }

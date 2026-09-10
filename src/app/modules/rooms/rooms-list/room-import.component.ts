@@ -1,7 +1,10 @@
 import { Component, EventEmitter, Output, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
+
+// xlsx is ~400 KB parsed — load it only when the import modal actually needs it.
+let xlsxPromise: Promise<typeof import('xlsx')> | null = null;
+const loadXlsx = () => (xlsxPromise ??= import('xlsx'));
 import { RoomService } from '../../../core/services/room.service';
 import { RoomTypeService } from '../../../core/services/room-type.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -193,7 +196,8 @@ export class RoomImportComponent implements OnInit {
   validCount = computed(() => this.rows().filter(r => r.errors.length === 0).length);
   errorCount = computed(() => this.rows().filter(r => r.errors.length > 0).length);
 
-  downloadTemplate() {
+  async downloadTemplate() {
+    const XLSX = await loadXlsx();
     const headers = ['RoomNumber', 'RoomType', 'PricePerNight', 'Status', 'Description', 'Amenities'];
     const examples = [
       ['101', 'Standard', 1500, 'Available', 'Garden view', 'WiFi, AC, TV'],
@@ -216,8 +220,9 @@ export class RoomImportComponent implements OnInit {
     this.result.set(null);
 
     const reader = new FileReader();
-    reader.onload = e => {
+    reader.onload = async e => {
       try {
+        const XLSX = await loadXlsx();
         const data = new Uint8Array(e.target!.result as ArrayBuffer);
         const wb = XLSX.read(data, { type: 'array' });
         const ws = wb.Sheets[wb.SheetNames[0]];
