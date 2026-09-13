@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { BookingService } from '../../../core/services/booking.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { SettingsService } from '../../../core/services/settings.service';
 import { Booking, BookingFilter, CheckInRequest, Bill } from '../../../shared/models';
 
 
@@ -354,17 +355,17 @@ import { Booking, BookingFilter, CheckInRequest, Bill } from '../../../shared/mo
               }
             </div>
 
-            <!-- tax & discount -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem">
-              <div class="form-group" style="margin:0">
-                <label style="font-size:.85rem">Discount Amount (₹)</label>
-                <input type="number" class="form-input" [(ngModel)]="discountAmount" min="0" placeholder="0.00" />
-              </div>
-              <div class="form-group" style="margin:0">
-                <label style="font-size:.85rem">Tax (%)</label>
-                <input type="number" class="form-input" [(ngModel)]="taxPercent" min="0" max="100" placeholder="10" />
-              </div>
+            <!-- discount — tax is configured once in Settings and applied automatically -->
+            <div class="form-group" style="margin-bottom:1.25rem;max-width:240px">
+              <label style="font-size:.85rem">Discount Amount (₹)</label>
+              <input type="number" class="form-input" [(ngModel)]="discountAmount" min="0" placeholder="0.00" />
             </div>
+            @if (hotelTaxPercent > 0) {
+              <p style="font-size:.75rem;color:var(--color-text-muted);margin:-0.75rem 0 1.25rem">
+                <i class="bi bi-info-circle"></i> Room and service rates already include {{ hotelTaxPercent }}% tax
+                (<a routerLink="/settings" (click)="billBooking=null">change in Settings</a>) — shown below as a breakdown, not added to the total.
+              </p>
+            }
 
             <!-- notes -->
             <div class="form-group" style="margin-bottom:1.25rem">
@@ -383,9 +384,9 @@ import { Booking, BookingFilter, CheckInRequest, Bill } from '../../../shared/mo
                   <span>Discount</span><span style="font-family:var(--font-mono)">-{{ discountAmount | currency:'INR':'symbol':'1.2-2' }}</span>
                 </div>
               }
-              @if (taxPercent > 0) {
-                <div style="display:flex;justify-content:space-between;padding:.3rem 0;font-size:.9rem">
-                  <span>Tax ({{ taxPercent }}%)</span><span style="font-family:var(--font-mono)">{{ getBillTax() | currency:'INR':'symbol':'1.2-2' }}</span>
+              @if (hotelTaxPercent > 0) {
+                <div style="display:flex;justify-content:space-between;padding:.3rem 0;font-size:.9rem;color:var(--color-text-muted)">
+                  <span>incl. Tax ({{ hotelTaxPercent }}%)</span><span style="font-family:var(--font-mono)">{{ getBillTax() | currency:'INR':'symbol':'1.2-2' }}</span>
                 </div>
               }
               <div style="display:flex;justify-content:space-between;padding:.5rem 0 0;font-size:1.1rem;font-weight:700;border-top:1px solid var(--color-border);margin-top:.5rem">
@@ -507,7 +508,7 @@ import { Booking, BookingFilter, CheckInRequest, Bill } from '../../../shared/mo
                 }
                 @if (currentBill.taxAmount > 0) {
                   <div style="display:flex;justify-content:space-between;padding:.4rem 0;font-size:.9rem">
-                    <span style="color:var(--color-text-muted)">Tax</span>
+                    <span style="color:var(--color-text-muted)">Tax (included)</span>
                     <span style="font-family:var(--font-mono)">{{ currentBill.taxAmount | currency:'INR':'symbol':'1.2-2' }}</span>
                   </div>
                 }
@@ -559,6 +560,7 @@ import { Booking, BookingFilter, CheckInRequest, Bill } from '../../../shared/mo
 export class BookingsListComponent implements OnInit {
   private bookingSvc = inject(BookingService);
   private toast = inject(ToastService);
+  private settingsSvc = inject(SettingsService);
 
   bookings: Booking[] = [];
   loading = true;
@@ -582,7 +584,10 @@ export class BookingsListComponent implements OnInit {
   // ── bill generation state ──
   billBooking: Booking | null = null;
   billLoading = false;
-  taxPercent = 10;
+  // Read-only: configured once in Settings, applied automatically, never typed
+  // per bill. Room/service rates are tax-inclusive, so this is a breakdown of
+  // what's already being charged, not an addition to it.
+  hotelTaxPercent = 0;
   discountAmount = 0;
   billNotes = '';
   extraServices: { description: string; amount: number; quantity: number }[] = [];
@@ -597,7 +602,13 @@ export class BookingsListComponent implements OnInit {
 
   get pages() { return Array.from({ length: this.totalPages }, (_, i) => i + 1); }
 
-  ngOnInit() { this.loadBookings(); }
+  ngOnInit() {
+    this.loadBookings();
+    this.settingsSvc.getHotelSettings().subscribe({
+      next: (res: any) => { if (res?.data) this.hotelTaxPercent = res.data.taxPercent || 0; },
+      error: () => {}
+    });
+  }
 
   // ── bookings list ──
   loadBookings() {
@@ -748,7 +759,6 @@ export class BookingsListComponent implements OnInit {
   openBillGeneration(b: Booking) {
     this.billBooking = b;
     this.extraServices = [];
-    this.taxPercent = 10;
     this.discountAmount = 0;
     this.billNotes = '';
   }
@@ -767,15 +777,21 @@ export class BookingsListComponent implements OnInit {
     return this.billBooking.totalAmount + servicesTotal;
   }
 
+  /** Room/service rates are tax-inclusive, so this backs the tax portion OUT of
+   *  what's already being charged (a breakdown) — it is never added on top. */
   getBillTax(): number {
+    if (this.hotelTaxPercent <= 0) return 0;
     // Never tax a negative base — a discount bigger than the subtotal shouldn't
-    // flip the tax negative and inflate the total back up.
-    const taxable = Math.max(0, this.getBillSubTotal() - this.discountAmount);
-    return Math.round(taxable * (this.taxPercent / 100) * 100) / 100;
+    // flip this negative.
+    const payable = Math.max(0, this.getBillSubTotal() - this.discountAmount);
+    const rate = this.hotelTaxPercent / 100;
+    return Math.round((payable - payable / (1 + rate)) * 100) / 100;
   }
 
   getBillTotal(): number {
-    return this.getBillSubTotal() - this.discountAmount + this.getBillTax();
+    // No + getBillTax() here — the inclusive price already covers it; adding it
+    // again would double-count the tax that's baked into the subtotal.
+    return Math.max(0, this.getBillSubTotal() - this.discountAmount);
   }
 
   /** Everything collected against this booking so far — the original advance
@@ -802,13 +818,8 @@ export class BookingsListComponent implements OnInit {
     // A cleared <input type="number"> binds to null, not 0 — treat "left blank"
     // as "0" instead of shipping `null` in the JSON, which the API's non-nullable
     // decimal fields reject outright (a raw 400 with no bill created at all).
-    const taxPercent = this.taxPercent ?? 0;
     const discountAmount = this.discountAmount ?? 0;
 
-    if (taxPercent < 0 || taxPercent > 100) {
-      this.toast.error('Tax must be between 0 and 100%');
-      return;
-    }
     if (discountAmount < 0) {
       this.toast.error('Discount cannot be negative');
       return;
@@ -828,7 +839,6 @@ export class BookingsListComponent implements OnInit {
         .filter(s => s.description && s.amount > 0)
         .map(s => ({ description: s.description, amount: s.amount ?? 0, quantity: s.quantity ?? 1 })),
       discountAmount,
-      taxPercent,
       notes: this.billNotes
     }).subscribe({
       next: res => {

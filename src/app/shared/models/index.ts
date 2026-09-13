@@ -301,6 +301,6 @@ export interface Bill {
 export interface GenerateBillRequest {
   extraServices: { description: string; amount: number; quantity: number }[];
   discountAmount: number;
-  taxPercent: number;
+  // No taxPercent — tax is configured once in Settings and applied server-side.
   notes?: string;
 }

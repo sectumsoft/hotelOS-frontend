@@ -77,6 +77,15 @@ import { PhoneInputComponent } from '../../shared/components/phone-input/phone-i
                 <textarea class="form-input" formControlName="address" rows="3"></textarea>
               </div>
 
+              <div class="form-group" style="margin-bottom:1.25rem;max-width:220px">
+                <label>Tax / GST (%)</label>
+                <input type="number" class="form-input" formControlName="taxPercent" min="0" max="100" placeholder="0" />
+                <span style="font-size:.72rem;color:var(--color-text-muted)">
+                  Room rates and service prices are tax-inclusive — this is applied once here and shown as a
+                  breakdown on every bill, instead of being typed in each time.
+                </span>
+              </div>
+
               <div style="display:flex;justify-content:flex-end">
                 <button type="submit" class="btn-primary-custom" [disabled]="savingHotel()">
                   {{ savingHotel() ? 'Saving…' : 'Save Changes' }}
@@ -237,7 +246,8 @@ export class SettingsComponent implements OnInit {
     subdomain: [{ value: '', disabled: false }],
     email: [''],
     phone: [''],
-    address: ['']
+    address: [''],
+    taxPercent: [0]
   });
 
   profileForm = this.fb.group({
