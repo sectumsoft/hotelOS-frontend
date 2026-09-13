@@ -111,7 +111,7 @@ import { Booking, BookingFilter, CheckInRequest, Bill } from '../../../shared/mo
               </div>
               <div class="booking-footer">
                 <div>
-                  <div style="font-family:var(--font-mono);font-weight:600;color:var(--color-accent)">\₹{{ b.totalAmount }}</div>
+                  <div style="font-family:var(--font-mono);font-weight:600;color:var(--color-accent)">{{ b.totalAmount | currency:'INR':'symbol':'1.2-2' }}</div>
                   @if (b.advancePaid) { <span class="advance-badge">Advance Paid</span> }
                 </div>
                 <div style="display:flex;gap:0.5rem">
@@ -175,15 +175,15 @@ import { Booking, BookingFilter, CheckInRequest, Bill } from '../../../shared/mo
             </div>
             <div class="info-row">
               <span class="info-label">Total Amount</span>
-              <span class="info-value">\₹{{ checkInBooking.totalAmount }}</span>
+              <span class="info-value">{{ checkInBooking.totalAmount | currency:'INR':'symbol':'1.2-2' }}</span>
             </div>
             <div class="info-row">
               <span class="info-label">Advance Paid</span>
-              <span class="info-value">\₹{{ checkInBooking.advanceAmount || 0 }}</span>
+              <span class="info-value">{{ (checkInBooking.advanceAmount || 0) | currency:'INR':'symbol':'1.2-2' }}</span>
             </div>
             <div class="info-row" style="border-bottom:none">
               <span class="info-label">Balance Due</span>
-              <span class="info-value" style="color:var(--color-accent)">\₹{{ checkInBooking.balanceAmount }}</span>
+              <span class="info-value" style="color:var(--color-accent)">{{ checkInBooking.balanceAmount | currency:'INR':'symbol':'1.2-2' }}</span>
             </div>
 
             <div class="section-divider"></div>
@@ -392,7 +392,7 @@ import { Booking, BookingFilter, CheckInRequest, Bill } from '../../../shared/mo
                 <span>Total</span><span style="font-family:var(--font-mono);color:var(--color-accent)">{{ getBillTotal() | currency:'INR':'symbol':'1.2-2' }}</span>
               </div>
               <div style="display:flex;justify-content:space-between;padding:.3rem 0;font-size:.85rem;color:var(--color-text-muted)">
-                <span>Amount Paid</span><span style="font-family:var(--font-mono)">-{{ (billBooking.advanceAmount || 0) | currency:'INR':'symbol':'1.2-2' }}</span>
+                <span>Amount Paid</span><span style="font-family:var(--font-mono)">-{{ getBillAmountPaid() | currency:'INR':'symbol':'1.2-2' }}</span>
               </div>
               <div style="display:flex;justify-content:space-between;padding:.3rem 0;font-size:.95rem;font-weight:600;color:var(--color-red)">
                 <span>Balance Due</span>
@@ -778,38 +778,57 @@ export class BookingsListComponent implements OnInit {
     return this.getBillSubTotal() - this.discountAmount + this.getBillTax();
   }
 
+  /** Everything collected against this booking so far — the original advance
+   *  *plus* any top-up collected at check-in. Check-in records that top-up by
+   *  reducing balanceAmount, not by raising advanceAmount, so deriving it from
+   *  totalAmount - balanceAmount (matching the backend) is what actually stays
+   *  correct after check-in; advanceAmount alone would go stale the moment a
+   *  guest pays the rest of the bill when they arrive. */
+  getBillAmountPaid(): number {
+    if (!this.billBooking) return 0;
+    return this.billBooking.totalAmount - this.billBooking.balanceAmount;
+  }
+
   /** Matches the backend's own Math.Max(0, …) clamp so the live preview never
    *  shows a negative "balance due" when the advance already covers the total. */
   getBillBalanceDue(): number {
     if (!this.billBooking) return 0;
-    return Math.max(0, this.getBillTotal() - (this.billBooking.advanceAmount || 0));
+    return Math.max(0, this.getBillTotal() - this.getBillAmountPaid());
   }
 
   confirmGenerateBill() {
     if (!this.billBooking) return;
 
-    if (this.taxPercent < 0 || this.taxPercent > 100) {
+    // A cleared <input type="number"> binds to null, not 0 — treat "left blank"
+    // as "0" instead of shipping `null` in the JSON, which the API's non-nullable
+    // decimal fields reject outright (a raw 400 with no bill created at all).
+    const taxPercent = this.taxPercent ?? 0;
+    const discountAmount = this.discountAmount ?? 0;
+
+    if (taxPercent < 0 || taxPercent > 100) {
       this.toast.error('Tax must be between 0 and 100%');
       return;
     }
-    if (this.discountAmount < 0) {
+    if (discountAmount < 0) {
       this.toast.error('Discount cannot be negative');
       return;
     }
-    if (this.discountAmount > this.getBillSubTotal()) {
+    if (discountAmount > this.getBillSubTotal()) {
       this.toast.error('Discount cannot exceed the subtotal');
       return;
     }
-    if (this.extraServices.some(s => s.description && (s.amount < 0 || s.quantity < 1))) {
+    if (this.extraServices.some(s => s.description && ((s.amount ?? 0) < 0 || (s.quantity ?? 0) < 1))) {
       this.toast.error('Extra service amount/quantity must be positive');
       return;
     }
 
     this.billLoading = true;
     this.bookingSvc.generateBill(this.billBooking.id, {
-      extraServices: this.extraServices.filter(s => s.description && s.amount > 0),
-      discountAmount: this.discountAmount,
-      taxPercent: this.taxPercent,
+      extraServices: this.extraServices
+        .filter(s => s.description && s.amount > 0)
+        .map(s => ({ description: s.description, amount: s.amount ?? 0, quantity: s.quantity ?? 1 })),
+      discountAmount,
+      taxPercent,
       notes: this.billNotes
     }).subscribe({
       next: res => {
