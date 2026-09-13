@@ -1,12 +1,11 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import ApexCharts from 'apexcharts';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { ToastService } from '../../core/services/toast.service';
 import { DashboardStats } from '../../shared/models';
 import { AvailabilityCalendarComponent } from './availability-calendar.component';
-
-declare const ApexCharts: any;
 
 @Component({
   selector: 'app-dashboard',
@@ -287,12 +286,12 @@ export class DashboardComponent implements OnInit {
 
   renderRevenueChart() {
     const el = document.getElementById('revenueChart');
-    if (!el || typeof (window as any).ApexCharts === 'undefined') return;
+    if (!el) return;
     const colors = this.getChartColors();
     const isMobile = window.innerWidth <= 768;
 
     const draw = (categories: string[], data: number[]) => {
-      new (window as any).ApexCharts(el, {
+      new ApexCharts(el, {
         chart: {
           type: 'area', height: this.getChartHeight(),
           toolbar: { show: false }, background: 'transparent',
@@ -336,13 +335,13 @@ export class DashboardComponent implements OnInit {
 
   renderOccupancyChart() {
     const el = document.getElementById('occupancyChart');
-    if (!el || typeof (window as any).ApexCharts === 'undefined') return;
+    if (!el) return;
     const colors = this.getChartColors();
     const isMobile = window.innerWidth <= 768;
     const days = isMobile ? 7 : 14;
 
     const draw = (categories: string[], data: number[]) => {
-      new (window as any).ApexCharts(el, {
+      new ApexCharts(el, {
         chart: {
           type: 'bar', height: this.getChartHeight(),
           toolbar: { show: false }, background: 'transparent'
@@ -373,11 +372,11 @@ export class DashboardComponent implements OnInit {
 
   renderSourcesChart() {
     const el = document.getElementById('sourcesChart');
-    if (!el || typeof (window as any).ApexCharts === 'undefined') return;
+    if (!el) return;
     const colors = this.getChartColors();
 
     const draw = (labels: string[], series: number[]) => {
-      new (window as any).ApexCharts(el, {
+      new ApexCharts(el, {
         chart: { type: 'donut', height: this.getChartHeight(), background: 'transparent' },
         series,
         labels,
