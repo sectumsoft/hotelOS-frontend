@@ -3,5 +3,5 @@
 export const environment = {
   production: true,
   apiUrl: 'https://hotelos-api-qa.onrender.com/api',
-  appName: 'HotelOS'
+  appName: 'INNWISE'
 };

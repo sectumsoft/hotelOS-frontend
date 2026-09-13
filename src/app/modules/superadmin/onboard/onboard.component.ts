@@ -49,7 +49,7 @@ import { ApiResponse } from '../../../shared/models';
                 <div class="input-addon">
                   <input class="form-input" [(ngModel)]="form.subdomain"
                     placeholder="grandpalace" />
-                  <span class="addon-text">.hotelOS.com</span>
+                  <span class="addon-text">.innwise.com</span>
                 </div>
               </div>
             </div>
@@ -144,7 +144,7 @@ import { ApiResponse } from '../../../shared/models';
             <p class="preview-label">Subdomain Preview</p>
             <div class="preview-url">
               <i class="bi bi-globe"></i>
-              <span>{{ form.subdomain || 'yourhotel' }}.hotelOS.com</span>
+              <span>{{ form.subdomain || 'yourhotel' }}.innwise.com</span>
             </div>
           </div>
         </div>

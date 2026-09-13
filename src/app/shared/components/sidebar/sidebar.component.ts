@@ -18,10 +18,10 @@ interface NavItem {
     <aside class="sidebar" [class.collapsed]="collapsed" [class.visible]="visible">
       <div class="sidebar-header">
         <div class="brand">
-          <div class="brand-icon">H</div>
+          <div class="brand-icon"><img src="assets/brand/innwise-icon.png" alt="INNWISE" /></div>
           @if (!collapsed) {
             <div class="brand-text">
-              <span class="brand-name">HotelOS</span>
+              <span class="brand-name">INNWISE</span>
               <span class="brand-tenant">{{ tenant?.name }}</span>
             </div>
           }
@@ -92,12 +92,13 @@ interface NavItem {
     .brand { display: flex; align-items: center; gap: 0.75rem; flex: 1; min-width: 0; }
     .brand-icon {
       width: 36px; height: 36px;
-      background: var(--color-accent);
-      color: #fff;
+      background: #fff;
       border-radius: var(--radius-md);
       display: flex; align-items: center; justify-content: center;
-      font-weight: 800; font-size: 1rem;
       flex-shrink: 0;
+      padding: 5px;
+      overflow: hidden;
+      img { width: 100%; height: 100%; object-fit: contain; }
     }
     .brand-text { min-width: 0; }
     .brand-name { display: block; font-weight: 700; font-size: 0.95rem; white-space: nowrap; }

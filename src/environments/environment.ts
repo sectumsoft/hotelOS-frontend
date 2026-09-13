@@ -6,7 +6,7 @@
 export const environment = {
   production: false,
   apiUrl: 'https://hotelos-api-qa.onrender.com/api',
-  appName: 'HotelOS'
+  appName: 'INNWISE'
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -17,5 +17,5 @@ export const environment = {
 // export const environment = {
 //   production: false,
 //   apiUrl: 'https://localhost:62481/api',
-//   appName: 'HotelOS'
+//   appName: 'INNWISE'
 // };

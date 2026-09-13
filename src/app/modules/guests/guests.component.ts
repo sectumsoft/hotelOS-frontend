@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { Subject, merge, of } from 'rxjs';
 import { debounceTime, switchMap } from 'rxjs/operators';
 import { GuestService, Guest, GuestDetail } from '../../core/services/guest.service';
+import { LoadingComponent } from '../../shared/components/loading/loading.component';
 
 @Component({
   selector: 'app-guests',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LoadingComponent],
   template: `
     <div class="guests-page">
       <div class="page-header">
@@ -32,8 +33,8 @@ import { GuestService, Guest, GuestDetail } from '../../core/services/guest.serv
       </div>
 
       @if (loading()) {
-        <div class="card-surface" style="padding:2rem;text-align:center;color:var(--color-text-muted)">
-          <span class="loading-spinner"></span>
+        <div class="card-surface">
+          <app-loading text="Loading guests" />
         </div>
       } @else if (guests().length === 0) {
         <div class="empty-state">
@@ -101,7 +102,7 @@ import { GuestService, Guest, GuestDetail } from '../../core/services/guest.serv
 
           <div class="modal-body" style="max-height:78vh;overflow-y:auto">
             @if (detailLoading()) {
-              <div style="padding:2rem;text-align:center;color:var(--color-text-muted)"><span class="loading-spinner"></span></div>
+              <app-loading text="Loading guest" />
             } @else if (detail()) {
               @if (detail(); as d) {
 

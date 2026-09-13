@@ -5,8 +5,10 @@ import { AuthService } from '../services/auth.service';
 import { ToastService } from '../services/toast.service';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const token = localStorage.getItem('token');
-  const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
+  // "Keep me signed in" decides which storage AuthService.login() wrote to —
+  // check both so an unremembered (sessionStorage-only) session still works.
+  const token = localStorage.getItem('token') ?? sessionStorage.getItem('token');
+  const tenant = JSON.parse(localStorage.getItem('tenant') ?? sessionStorage.getItem('tenant') ?? 'null');
 
   // ToastService has no HttpClient dependency, so it's safe to resolve eagerly.
   // AuthService pulls in HttpClient, so it stays lazy (below) to avoid a DI cycle.

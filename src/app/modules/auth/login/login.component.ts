@@ -13,11 +13,11 @@ import { ToastService } from '../../../core/services/toast.service';
     <div class="login-page">
       <div class="login-left">
         <div class="login-brand">
-          <div class="brand-icon">H</div>
-          <span>HotelOS</span>
+          <div class="brand-icon"><img src="assets/brand/innwise-icon.png" alt="INNWISE" /></div>
+          <span>INNWISE</span>
         </div>
         <div class="login-hero">
-          <h1>Premium Hotel<br>Management Platform</h1>
+          <h1>Intelligent Hospitality<br>Management</h1>
           <p>Multi-tenant SaaS solution for modern hotel operations. Manage rooms, bookings, guests, and revenue all in one place.</p>
         </div>
         <div class="login-stats">
@@ -35,7 +35,7 @@ import { ToastService } from '../../../core/services/toast.service';
           <form [formGroup]="form" (ngSubmit)="onSubmit()">
             <div class="form-group" style="margin-bottom:1rem">
               <label>Email address</label>
-              <input type="email" class="form-input" formControlName="email" placeholder="admin@grandhotel.com" autocomplete="email" />
+              <input type="email" class="form-input" formControlName="email" placeholder="you@yourhotel.com" autocomplete="email" />
               @if (form.get('email')?.invalid && form.get('email')?.touched) {
                 <span class="field-error">Valid email required</span>
               }
@@ -73,10 +73,6 @@ import { ToastService } from '../../../core/services/toast.service';
           </form>
           <div class="auth-footer">
             <p>Don't have an account? <a href="#" class="signup-link" (click)="$event.preventDefault();goToSignup()">Create one</a></p>
-          </div>
-          <div class="demo-hint">
-            <i class="bi bi-lightbulb"></i>
-            <span><strong>Demo credentials:</strong> admin&#64;grandhotel.com / password123</span>
           </div>
         </div>
       </div>
@@ -120,11 +116,13 @@ import { ToastService } from '../../../core/services/toast.service';
       position: relative; z-index: 1;
       .brand-icon {
         width: 40px; height: 40px;
-        background: var(--color-accent); color: #fff;
+        background: #fff;
         border-radius: var(--radius-md);
         display: flex; align-items: center; justify-content: center;
-        font-weight: 800;
+        padding: 6px;
+        overflow: hidden;
         box-shadow: 0 4px 12px rgba(59,130,246,0.3);
+        img { width: 100%; height: 100%; object-fit: contain; }
       }
     }
     .login-hero {
@@ -214,15 +212,6 @@ import { ToastService } from '../../../core/services/toast.service';
         &:hover { text-decoration: underline; }
       }
     }
-    .demo-hint {
-      margin-top: 1.5rem; padding: 0.75rem 1rem;
-      background: var(--color-accent-soft); 
-      border: 1px solid rgba(59,130,246,0.2);
-      border-radius: var(--radius-md);
-      font-size: 0.75rem; color: var(--color-text-muted);
-      display: flex; align-items: flex-start; gap: 0.75rem;
-      i { flex-shrink: 0; margin-top: 2px; color: var(--color-accent); font-size: 0.85rem; }
-    }
   `]
 })
 export class LoginComponent implements OnInit {
@@ -232,8 +221,8 @@ export class LoginComponent implements OnInit {
   private toast = inject(ToastService);
 
   form = this.fb.group({
-    email: ['admin@grandhotel.com', [Validators.required, Validators.email]],
-    password: ['password123', Validators.required],
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', Validators.required],
     rememberMe: [false]
   });
 
@@ -263,7 +252,7 @@ export class LoginComponent implements OnInit {
       localStorage.removeItem('rememberMe_email');
     }
 
-    this.auth.login({ email: email!, password: password! }).subscribe({
+    this.auth.login({ email: email!, password: password! }, !!rememberMe).subscribe({
       next: (res) => {
         if (res.success) {
           this.toast.success('Welcome back!', 'Signed in');

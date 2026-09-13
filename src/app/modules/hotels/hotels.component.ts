@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../../shared/models';
+import { LoadingComponent } from '../../shared/components/loading/loading.component';
 
 interface Hotel {
   id: string;
@@ -17,7 +18,7 @@ interface Hotel {
 @Component({
   selector: 'app-hotels',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, LoadingComponent],
   template: `
     <div class="hotels-page">
 
@@ -80,10 +81,7 @@ interface Hotel {
 
       <!-- Hotels Grid -->
       @if (loading()) {
-        <div class="loading-state">
-          <span class="loading-spinner"></span>
-          <span>Loading hotels...</span>
-        </div>
+        <app-loading text="Loading hotels" />
       } @else {
         <div class="hotels-grid">
           @for (hotel of hotels(); track hotel.id) {
@@ -98,7 +96,7 @@ interface Hotel {
                   <div class="hotel-name">{{ hotel.name }}</div>
                   <div class="hotel-subdomain">
                     <i class="bi bi-globe"></i>
-                    <span>{{ hotel.subdomain }}.hotelOS.com</span>
+                    <span>{{ hotel.subdomain }}.innwise.com</span>
                   </div>
                 </div>
                 <div class="status-badge" [class.active]="hotel.isActive" [class.inactive]="!hotel.isActive">
@@ -431,17 +429,6 @@ interface Hotel {
       border-color: transparent;
     }
     .action-btn.success:hover { filter: brightness(0.95); }
-
-    /* ── Loading State ── */
-    .loading-state {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.75rem;
-      padding: 4rem;
-      color: var(--color-text-muted);
-      font-size: 0.9rem;
-    }
 
     /* ── Empty State ── */
     .empty-state {

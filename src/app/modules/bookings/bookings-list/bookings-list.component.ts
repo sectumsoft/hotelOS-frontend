@@ -327,7 +327,7 @@ import { Booking, BookingFilter, CheckInRequest, Bill } from '../../../shared/mo
                 Room {{ billBooking.roomNumber }} · {{ billBooking.roomType }} · {{ billBooking.totalNights }} nights
               </div>
               <div style="font-family:var(--font-mono);color:var(--color-accent);margin-top:.5rem">
-                Room Charges: \₹{{ billBooking.totalAmount }}
+                Room Charges: {{ billBooking.totalAmount | currency:'INR':'symbol':'1.2-2' }}
               </div>
             </div>
 
@@ -376,27 +376,27 @@ import { Booking, BookingFilter, CheckInRequest, Bill } from '../../../shared/mo
             <div style="background:var(--color-surface-2);border-radius:var(--radius-md);padding:1rem;border:1px solid var(--color-border)">
               <h5 style="margin:0 0 .75rem;font-size:.85rem;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.05em">Bill Preview</h5>
               <div style="display:flex;justify-content:space-between;padding:.3rem 0;font-size:.9rem">
-                <span>Subtotal</span><span style="font-family:var(--font-mono)">\₹{{ getBillSubTotal() }}</span>
+                <span>Subtotal</span><span style="font-family:var(--font-mono)">{{ getBillSubTotal() | currency:'INR':'symbol':'1.2-2' }}</span>
               </div>
               @if (discountAmount > 0) {
                 <div style="display:flex;justify-content:space-between;padding:.3rem 0;font-size:.9rem;color:var(--color-green)">
-                  <span>Discount</span><span style="font-family:var(--font-mono)">-\₹{{ discountAmount }}</span>
+                  <span>Discount</span><span style="font-family:var(--font-mono)">-{{ discountAmount | currency:'INR':'symbol':'1.2-2' }}</span>
                 </div>
               }
               @if (taxPercent > 0) {
                 <div style="display:flex;justify-content:space-between;padding:.3rem 0;font-size:.9rem">
-                  <span>Tax ({{ taxPercent }}%)</span><span style="font-family:var(--font-mono)">\₹{{ getBillTax() }}</span>
+                  <span>Tax ({{ taxPercent }}%)</span><span style="font-family:var(--font-mono)">{{ getBillTax() | currency:'INR':'symbol':'1.2-2' }}</span>
                 </div>
               }
               <div style="display:flex;justify-content:space-between;padding:.5rem 0 0;font-size:1.1rem;font-weight:700;border-top:1px solid var(--color-border);margin-top:.5rem">
-                <span>Total</span><span style="font-family:var(--font-mono);color:var(--color-accent)">\₹{{ getBillTotal() }}</span>
+                <span>Total</span><span style="font-family:var(--font-mono);color:var(--color-accent)">{{ getBillTotal() | currency:'INR':'symbol':'1.2-2' }}</span>
               </div>
               <div style="display:flex;justify-content:space-between;padding:.3rem 0;font-size:.85rem;color:var(--color-text-muted)">
-                <span>Amount Paid</span><span style="font-family:var(--font-mono)">-\₹{{ billBooking.advanceAmount || 0 }}</span>
+                <span>Amount Paid</span><span style="font-family:var(--font-mono)">-{{ (billBooking.advanceAmount || 0) | currency:'INR':'symbol':'1.2-2' }}</span>
               </div>
               <div style="display:flex;justify-content:space-between;padding:.3rem 0;font-size:.95rem;font-weight:600;color:var(--color-red)">
                 <span>Balance Due</span>
-                <span style="font-family:var(--font-mono)">\₹{{ getBillTotal() - (billBooking.advanceAmount || 0) }}</span>
+                <span style="font-family:var(--font-mono)">{{ getBillBalanceDue() | currency:'INR':'symbol':'1.2-2' }}</span>
               </div>
             </div>
 
@@ -440,8 +440,7 @@ import { Booking, BookingFilter, CheckInRequest, Bill } from '../../../shared/mo
                 <div style="font-size:.8rem;color:var(--color-text-muted)">Generated: {{ currentBill.generatedAt | date:'MMM d, yyyy h:mm a' }}</div>
               </div>
               <div style="text-align:right">
-                <div style="font-weight:700;font-size:1rem">HotelOS</div>
-                <div style="font-size:.8rem;color:var(--color-text-muted)">Hotel Management System</div>
+                <img [src]="brandLogoUrl" alt="INNWISE" style="height:32px;width:auto" />
               </div>
             </div>
 
@@ -483,10 +482,10 @@ import { Booking, BookingFilter, CheckInRequest, Bill } from '../../../shared/mo
                       <span style="font-size:.75rem;color:var(--color-text-muted);margin-left:.5rem">{{ item.category }}</span>
                     </td>
                     <td style="padding:.6rem 1rem;text-align:center;font-size:.9rem">{{ item.quantity }}</td>
-                    <td style="padding:.6rem 1rem;text-align:right;font-family:var(--font-mono);font-size:.9rem">\₹{{ item.unitPrice }}</td>
+                    <td style="padding:.6rem 1rem;text-align:right;font-family:var(--font-mono);font-size:.9rem">{{ item.unitPrice | currency:'INR':'symbol':'1.2-2' }}</td>
                     <td style="padding:.6rem 1rem;text-align:right;font-family:var(--font-mono);font-size:.9rem"
                         [style.color]="item.amount < 0 ? 'var(--color-green)' : 'inherit'">
-                      \₹{{ item.amount }}
+                      {{ item.amount | currency:'INR':'symbol':'1.2-2' }}
                     </td>
                   </tr>
                 }
@@ -498,31 +497,31 @@ import { Booking, BookingFilter, CheckInRequest, Bill } from '../../../shared/mo
               <div style="min-width:280px">
                 <div style="display:flex;justify-content:space-between;padding:.4rem 0;font-size:.9rem">
                   <span style="color:var(--color-text-muted)">Subtotal</span>
-                  <span style="font-family:var(--font-mono)">\₹{{ currentBill.subTotal }}</span>
+                  <span style="font-family:var(--font-mono)">{{ currentBill.subTotal | currency:'INR':'symbol':'1.2-2' }}</span>
                 </div>
                 @if (currentBill.discountAmount > 0) {
                   <div style="display:flex;justify-content:space-between;padding:.4rem 0;font-size:.9rem;color:var(--color-green)">
                     <span>Discount</span>
-                    <span style="font-family:var(--font-mono)">-\₹{{ currentBill.discountAmount }}</span>
+                    <span style="font-family:var(--font-mono)">-{{ currentBill.discountAmount | currency:'INR':'symbol':'1.2-2' }}</span>
                   </div>
                 }
                 @if (currentBill.taxAmount > 0) {
                   <div style="display:flex;justify-content:space-between;padding:.4rem 0;font-size:.9rem">
                     <span style="color:var(--color-text-muted)">Tax</span>
-                    <span style="font-family:var(--font-mono)">\₹{{ currentBill.taxAmount }}</span>
+                    <span style="font-family:var(--font-mono)">{{ currentBill.taxAmount | currency:'INR':'symbol':'1.2-2' }}</span>
                   </div>
                 }
                 <div style="display:flex;justify-content:space-between;padding:.6rem 0;font-size:1.1rem;font-weight:700;border-top:2px solid var(--color-border);margin-top:.25rem">
                   <span>Total</span>
-                  <span style="font-family:var(--font-mono);color:var(--color-accent)">\₹{{ currentBill.totalAmount }}</span>
+                  <span style="font-family:var(--font-mono);color:var(--color-accent)">{{ currentBill.totalAmount | currency:'INR':'symbol':'1.2-2' }}</span>
                 </div>
                 <div style="display:flex;justify-content:space-between;padding:.4rem 0;font-size:.9rem;color:var(--color-green)">
                   <span>Amount Paid</span>
-                  <span style="font-family:var(--font-mono)">-\₹{{ currentBill.amountPaid }}</span>
+                  <span style="font-family:var(--font-mono)">-{{ currentBill.amountPaid | currency:'INR':'symbol':'1.2-2' }}</span>
                 </div>
                 <div style="display:flex;justify-content:space-between;padding:.5rem 0;font-size:1rem;font-weight:700;color:var(--color-red);border-top:1px solid var(--color-border);margin-top:.25rem">
                   <span>Balance Due</span>
-                  <span style="font-family:var(--font-mono)">\₹{{ currentBill.balanceDue }}</span>
+                  <span style="font-family:var(--font-mono)">{{ currentBill.balanceDue | currency:'INR':'symbol':'1.2-2' }}</span>
                 </div>
               </div>
             </div>
@@ -591,6 +590,10 @@ export class BookingsListComponent implements OnInit {
   // ── bill view state ──
   currentBill: Bill | null = null;
   showBillView = false;
+  // Absolute URL: the print/PDF window is opened blank (about:blank) and has no
+  // base to resolve a relative "assets/…" path against, so the invoice logo
+  // needs its own origin baked in.
+  readonly brandLogoUrl = `${location.origin}/assets/brand/innwise-logo.png`;
 
   get pages() { return Array.from({ length: this.totalPages }, (_, i) => i + 1); }
 
@@ -765,15 +768,43 @@ export class BookingsListComponent implements OnInit {
   }
 
   getBillTax(): number {
-    return Math.round((this.getBillSubTotal() - this.discountAmount) * (this.taxPercent / 100) * 100) / 100;
+    // Never tax a negative base — a discount bigger than the subtotal shouldn't
+    // flip the tax negative and inflate the total back up.
+    const taxable = Math.max(0, this.getBillSubTotal() - this.discountAmount);
+    return Math.round(taxable * (this.taxPercent / 100) * 100) / 100;
   }
 
   getBillTotal(): number {
     return this.getBillSubTotal() - this.discountAmount + this.getBillTax();
   }
 
+  /** Matches the backend's own Math.Max(0, …) clamp so the live preview never
+   *  shows a negative "balance due" when the advance already covers the total. */
+  getBillBalanceDue(): number {
+    if (!this.billBooking) return 0;
+    return Math.max(0, this.getBillTotal() - (this.billBooking.advanceAmount || 0));
+  }
+
   confirmGenerateBill() {
     if (!this.billBooking) return;
+
+    if (this.taxPercent < 0 || this.taxPercent > 100) {
+      this.toast.error('Tax must be between 0 and 100%');
+      return;
+    }
+    if (this.discountAmount < 0) {
+      this.toast.error('Discount cannot be negative');
+      return;
+    }
+    if (this.discountAmount > this.getBillSubTotal()) {
+      this.toast.error('Discount cannot exceed the subtotal');
+      return;
+    }
+    if (this.extraServices.some(s => s.description && (s.amount < 0 || s.quantity < 1))) {
+      this.toast.error('Extra service amount/quantity must be positive');
+      return;
+    }
+
     this.billLoading = true;
     this.bookingSvc.generateBill(this.billBooking.id, {
       extraServices: this.extraServices.filter(s => s.description && s.amount > 0),
@@ -794,22 +825,38 @@ export class BookingsListComponent implements OnInit {
               this.billLoading = false;
             }
           });
+        } else {
+          this.toast.error(res.message || 'Failed to generate bill');
+          this.billLoading = false;
         }
       },
-      error: () => { this.toast.error('Failed to generate bill'); this.billLoading = false; }
+      error: err => {
+        this.toast.error(err.error?.message || 'Failed to generate bill');
+        this.billLoading = false;
+      }
     });
   }
 
   // ── bill view / print / pdf ──
   closeBillView() { this.showBillView = false; this.currentBill = null; }
 
-  printBill() { window.print(); }
+  // `window.print()` alone would print the whole app shell (sidebar, topbar, the
+  // modal backdrop) since there's no @media print rule scoping it to the bill —
+  // and the theme's CSS custom properties (var(--color-accent) etc.) don't exist
+  // in a blank popup anyway. Both "Print" and "Download PDF" open the same clean,
+  // plainly-styled copy of the bill and let the browser's print dialog handle it
+  // (its own "Save as PDF" destination *is* the PDF download).
+  printBill() { this.openBillPrintWindow(); }
+  downloadPdf() { this.openBillPrintWindow(); }
 
-  downloadPdf() {
+  private openBillPrintWindow() {
     const printContents = document.getElementById('bill-print-area')?.innerHTML;
     if (!printContents) return;
     const win = window.open('', '_blank');
-    if (!win) return;
+    if (!win) {
+      this.toast.error('Pop-up blocked — allow pop-ups for this site to print or save the bill.');
+      return;
+    }
     const billNumber = this.currentBill?.billNumber ?? '';
     win.document.write(
       '<html><head><title>Bill - ' + billNumber + '</title>' +
@@ -818,19 +865,17 @@ export class BookingsListComponent implements OnInit {
       'table { width: 100%; border-collapse: collapse; }' +
       'th, td { padding: 8px 12px; border-bottom: 1px solid #eee; text-align: left; }' +
       'th { background: #f5f5f5; font-weight: 600; }' +
-      '.text-right { text-align: right; }' +
-      '.total-row td { font-weight: bold; border-top: 2px solid #000; }' +
       'h2, h3 { margin: 0 0 0.5rem; }' +
-      '.bill-header { display: flex; justify-content: space-between; margin-bottom: 2rem; }' +
-      '.summary-row { display: flex; justify-content: space-between; padding: 4px 0; }' +
-      '.balance { color: #e53e3e; font-size: 1.2rem; font-weight: bold; }' +
       '</style>' +
       '</head><body>' + printContents + '</body></html>'
     );
     win.document.close();
     win.focus();
+    // Close only once the print dialog is dismissed — closing right after
+    // print() is called cuts off "Save as PDF" in browsers (Firefox included)
+    // where print() doesn't block until the dialog closes.
+    win.onafterprint = () => win.close();
     win.print();
-    win.close();
   }
 
   // ── check-out / cancel ──
